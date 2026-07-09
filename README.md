@@ -59,7 +59,7 @@ Required environment variables in prod:
 mvn spring-boot:run
 ```
 
-API docs available at: `http://localhost:8080/swagger-ui.html`
+API docs available at: `http://localhost:11711/swagger-ui/index.html#/`
 
 ---
 
