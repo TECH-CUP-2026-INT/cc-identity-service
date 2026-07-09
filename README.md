@@ -66,6 +66,9 @@ API docs available at: `http://localhost:8080/swagger-ui.html`
 ## Running tests
 
 ```bash
+
+docker run --name identity-db -e POSTGRES_DB=identity_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
+
 mvn verify
 ```
 
