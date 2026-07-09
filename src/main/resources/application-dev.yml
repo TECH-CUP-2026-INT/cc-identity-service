@@ -1,3 +1,6 @@
+#verrides the base config for local development. It points to a local PostgreSQL database, configures Mailtrap as a fake email server 
+#(so OTP emails don't send for real), and enables verbose logging for debugging.
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/identity_db

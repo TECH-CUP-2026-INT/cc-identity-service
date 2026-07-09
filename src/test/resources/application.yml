@@ -1,3 +1,6 @@
+#overrides config for unit tests. It swaps PostgreSQL for an in-memory H2 database and disables real email sending, 
+#so tests run fast and isolated without any external dependencies.
+
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

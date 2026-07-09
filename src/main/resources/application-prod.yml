@@ -1,3 +1,5 @@
+#overrides config for the production environment. All sensitive values(database URL, credentials, mail server) 
+#are read exclusively from environment variables, nothing is hardcoded. Logging is minimal to reduce noise.
 spring:
   datasource:
     url: ${DB_URL}
