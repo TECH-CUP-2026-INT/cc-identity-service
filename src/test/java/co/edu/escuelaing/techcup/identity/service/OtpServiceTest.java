@@ -69,7 +69,6 @@ class OtpServiceTest {
     @Test
     void verify_validOtp_marksAsUsed() {
         OtpCodeEntity otpCode = new OtpCodeEntity.Builder()
-            .id(UUID.randomUUID())
             .code("123456")
             .user(user)
             .expiresAt(LocalDateTime.now().plusMinutes(5))
