@@ -15,8 +15,8 @@ Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · JWT (jjwt 0.12.5) · Spri
 src/
 ├── main/
 │   ├── java/co/edu/escuelaing/techcup/identity/
-│   │   ├── entity/          # UserEntity, OtpCodeEntity
-│   │   ├── repository/      # UserRepository, OtpCodeRepository
+│   │   ├── entity/          # userEntity, otpCodeEntity
+│   │   ├── repository/      # userRepository, otpCodeRepository
 │   │   ├── dto/             # Request and response objects
 │   │   ├── service/         # Business logic
 │   │   ├── controller/      # REST endpoints
