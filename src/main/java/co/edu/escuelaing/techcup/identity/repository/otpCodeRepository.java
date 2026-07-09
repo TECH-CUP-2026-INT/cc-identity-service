@@ -1,6 +1,6 @@
 package co.edu.escuelaing.techcup.identity.repository;
-import co.edu.escuelaing.techcup.identity.entity.otpCodeEntity;
-import co.edu.escuelaing.techcup.identity.entity.userEntity;
+import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
+import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +15,7 @@ import java.util.UUID;
  * @see OtpCodeEntity
  */
 @Repository
-public interface otpCodeRepository extends JpaRepository<otpCodeEntity, UUID> {
+public interface OtpCodeRepository extends JpaRepository<OtpCodeEntity, UUID> {
 
     /**
      * Finds the most recent unused and non-expired OTP for a given user and code.
@@ -24,8 +24,8 @@ public interface otpCodeRepository extends JpaRepository<otpCodeEntity, UUID> {
      * @param now current timestamp to check expiration
      * @return an Optional containing the OTP if valid, empty otherwise
      */
-    Optional<otpCodeEntity> findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            String code, userEntity user, LocalDateTime now);
+    Optional<OtpCodeEntity> findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
+            String code, UserEntity user, LocalDateTime now);
     /**
      * Deletes all expired OTP codes for a given user.
      * @param user the user whose expired OTPs should be removed
@@ -33,5 +33,5 @@ public interface otpCodeRepository extends JpaRepository<otpCodeEntity, UUID> {
      */
     @Modifying
     @Query("DELETE FROM OtpCodeEntity o WHERE o.user = :user AND o.expiresAt < :now")
-    void deleteExpiredByUser(@Param("user") userEntity user, @Param("now") LocalDateTime now);
+    void deleteExpiredByUser(@Param("user") UserEntity user, @Param("now") LocalDateTime now);
 }

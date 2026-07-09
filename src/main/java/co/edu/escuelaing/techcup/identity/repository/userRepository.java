@@ -1,5 +1,5 @@
 package co.edu.escuelaing.techcup.identity.repository;
-import co.edu.escuelaing.techcup.identity.entity.userEntity;
+import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
@@ -9,10 +9,10 @@ import java.util.UUID;
  * Extends JpaRepository to inherit standard CRUD methods.
  * Custom queries are derived from method names by Spring Data JPA.
  *
- * @see userEntity
+ * @see UserEntity
  */
 @Repository
-public interface userRepository extends JpaRepository<userEntity, UUID> {
+public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     /**
      * Finds a user by their email address.
      * @param email the email to search for
@@ -23,7 +23,7 @@ public interface userRepository extends JpaRepository<userEntity, UUID> {
      * @param email
      * @return
      */
-    Optional<userEntity> findByEmail(String email);
+    Optional<UserEntity> findByEmail(String email);
     /**
      * Checks whether a user with the given email already exists.
      * @param email the email to check

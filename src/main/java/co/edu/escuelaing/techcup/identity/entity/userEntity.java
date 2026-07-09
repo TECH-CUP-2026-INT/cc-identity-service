@@ -4,8 +4,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
-@Entity
-@Table(name = "users")
+
 /**
  * 
  * Represents a registered user in the system
@@ -16,8 +15,9 @@ import java.util.UUID;
  * Timestamps (createdAt, updatedAt) are managed automatically by Hibernate and should never be set manually.
  *  @see OtpCodeEntity
  */
-
-public class userEntity {
+@Entity
+@Table(name = "users")
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -52,13 +52,13 @@ public class userEntity {
     public enum Role { USER, ADMIN }
 
     // Constructor 
-    public userEntity() {}
+    public UserEntity() {}
     /**
      * 
      * @param builder is the builder instance containing the field values
      */
 
-    private userEntity (Builder builder) {
+    private UserEntity (Builder builder) {
         this.id = builder.id;
         this.email = builder.email;
         this.password = builder.password;
@@ -89,7 +89,7 @@ public class userEntity {
         public Builder enabled(boolean enabled) { this.enabled = enabled; return this; }
         public Builder role(Role role) { this.role = role; return this; }
 
-        public userEntity build() { return new userEntity(this); }
+        public UserEntity build() { return new UserEntity(this); }
     }
     /**
      * Getters

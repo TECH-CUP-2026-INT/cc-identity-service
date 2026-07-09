@@ -13,7 +13,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "otp_codes")
-public class otpCodeEntity {
+public class OtpCodeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -21,7 +21,7 @@ public class otpCodeEntity {
     private String code;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private userEntity user;
+    private UserEntity user;
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
     @Column(nullable = false)
@@ -33,13 +33,13 @@ public class otpCodeEntity {
     /**
      * Constructor (empty)
      */
-    public otpCodeEntity() {}
+    public OtpCodeEntity() {}
 
     /**
      * Private constructor used exclusively by the Builder.
      * @param builder the builder instance containing the field values
      */
-    private otpCodeEntity(Builder builder) {
+    private OtpCodeEntity(Builder builder) {
         this.code = builder.code;
         this.user = builder.user;
         this.expiresAt = builder.expiresAt;
@@ -50,15 +50,15 @@ public class otpCodeEntity {
     }
     public static class Builder {
         private String code;
-        private userEntity user;
+        private UserEntity user;
         private LocalDateTime expiresAt;
         private boolean used = false;
 
         public Builder code(String code) { this.code = code; return this; }
-        public Builder user(userEntity user) { this.user = user; return this; }
+        public Builder user(UserEntity user) { this.user = user; return this; }
         public Builder expiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; return this; }
         public Builder used(boolean used) { this.used = used; return this; }
-        public otpCodeEntity build() { return new otpCodeEntity(this); }
+        public OtpCodeEntity build() { return new OtpCodeEntity(this); }
     }
     /**
      * Getters
@@ -66,7 +66,7 @@ public class otpCodeEntity {
      */
     public UUID getId() { return id; }
     public String getCode() { return code; }
-    public userEntity getUser() { return user; }
+    public UserEntity getUser() { return user; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public boolean isUsed() { return used; }
     public LocalDateTime getCreatedAt() { return createdAt; }
@@ -75,7 +75,7 @@ public class otpCodeEntity {
      * @param code
      */
     public void setCode(String code) { this.code = code; }
-    public void setUser(userEntity user) { this.user = user; }
+    public void setUser(UserEntity user) { this.user = user; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
     public void setUsed(boolean used) { this.used = used; }
 }
