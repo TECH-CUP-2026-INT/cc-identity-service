@@ -95,12 +95,12 @@ Coverage report is at: `target/site/jacoco/index.html`
 
 
 
-src/test/resources/image.png
+![Coverage general overview](src/test/resources/image.png)
 
-src/test/resources/image2.png
+![Coverage service package](src/test/resources/image2.png)
 
-src/test/resources/image3.png
+![Coverage detail 3](src/test/resources/image3.png)
 
-src/test/resources/image4.png
+![Coverage detail 4](src/test/resources/image4.png)
 
-src/test/resources/image5.png
+![Coverage detail 5](src/test/resources/image5.png)
