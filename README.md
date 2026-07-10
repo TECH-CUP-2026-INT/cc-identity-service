@@ -96,7 +96,11 @@ Coverage report is at: `target/site/jacoco/index.html`
 
 
 src/test/resources/image.png
+
 src/test/resources/image2.png
+
 src/test/resources/image3.png
+
 src/test/resources/image4.png
+
 src/test/resources/image5.png
