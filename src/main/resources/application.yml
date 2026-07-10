@@ -1,0 +1,23 @@
+#This is is the Spring Boot configuration file. 
+#It defines runtime settings, server port, database connection, JWT secret, email server, and logging levels 
+#between dev, prod and test, so each environment uses the right values without changing code
+
+spring:
+  application:
+    name: service-identity
+  profiles:
+    active: dev
+
+server:
+
+#CONFIRM PORT WITH THE OTHER MICROSERVICES TEAMS 
+  port: 11711
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:super-secret-key-that-is-at-least-256-bits-long-for-hs256}
+    expiration-ms: 900000        # 15 min
+    refresh-expiration-ms: 604800000  # 7 days
+  otp:
+    expiration-minutes: 5
+    length: 6
