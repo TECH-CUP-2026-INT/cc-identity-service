@@ -5,7 +5,7 @@
 
 ## Tech Stack
 
-Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · JWT (jjwt 0.12.5) · Spring Security · Spring Mail · MapStruct · Jacoco · Swagger (springdoc 2.6.0) · Docker · GitHub Actions
+Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · JWT (jjwt 0.12.5) · Spring Security · Spring Mail · MapStruct · Jacoco · Swagger (springdoc 2.8.0) · Docker · GitHub Actions
 
 ---
 
