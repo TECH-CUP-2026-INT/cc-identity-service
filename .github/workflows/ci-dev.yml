@@ -1,0 +1,31 @@
+# Runs on every push to feat/ruiz. Compiles the project and runs all tests
+#Author: William R. 
+name: CI - Dev
+
+on:
+  push:
+    branches:
+      - feat/ruiz
+  pull_request:
+    branches:
+      - feat/ruiz
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn verify -B
+        env:
+          JWT_SECRET: test-secret-key-that-is-at-least-256-bits-long-for-testing
