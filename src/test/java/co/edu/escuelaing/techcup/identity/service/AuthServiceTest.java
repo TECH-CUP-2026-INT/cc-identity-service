@@ -162,7 +162,6 @@ class AuthServiceTest {
         when(userDetailsService.loadUserByUsername("test@example.com")).thenReturn(userDetails);
         when(jwtService.isTokenValid("valid-refresh-token", userDetails)).thenReturn(true);
         when(jwtService.generateAccessToken(userDetails)).thenReturn("new-access-token");
-        when(jwtService.generateRefreshToken(userDetails)).thenReturn("new-refresh-token");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
         AuthResponse response = authService.refreshToken(request);

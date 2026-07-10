@@ -61,6 +61,9 @@ mvn spring-boot:run
 
 API docs available at: `http://localhost:11711/swagger-ui/index.html#/`
 
+![alt text](src/img/sstests_port_11711.png)
+
+
 ---
 
 ## Running tests
@@ -73,3 +76,20 @@ mvn verify
 ```
 
 Coverage report is at: `target/site/jacoco/index.html`
+
+![alt text](src/img/coverage_feat_ruiz.png)
+
+![alt text](src/img/coverage_config.png)
+
+![alt text](src/img/coverage_controller.png)
+
+![alt text](src/img/coverage_DTO.png)
+
+![alt text](src/img/coverage_exception.png)
+
+![alt text](src/img/coverage_service.png)
+
+![alt text](src/img/coverage_entity.png)
+
+
+

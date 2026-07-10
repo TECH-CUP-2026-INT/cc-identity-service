@@ -37,7 +37,7 @@ class OtpServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(otpService, "otpExpirationMinutes", 5);
+        ReflectionTestUtils.setField(otpService, "expirationMinutes", 5);
         ReflectionTestUtils.setField(otpService, "otpLength", 6);
 
         user = new UserEntity.Builder()

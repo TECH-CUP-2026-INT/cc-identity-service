@@ -11,7 +11,7 @@ spring:
 server:
 
 #CONFIRM PORT WITH THE OTHER MICROSERVICES TEAMS 
-  port: 8080
+  port: 11711
 
 app:
   jwt:

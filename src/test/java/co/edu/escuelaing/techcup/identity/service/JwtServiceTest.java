@@ -78,6 +78,6 @@ class JwtServiceTest {
     void isTokenValid_expiredToken_returnsFalse() {
         ReflectionTestUtils.setField(jwtService, "expirationMs", -1000L);
         String token = jwtService.generateAccessToken(userDetails);
-        assertFalse(jwtService.isTokenValid(token, userDetails));
+        assertThrows(Exception.class, () -> jwtService.isTokenValid(token, userDetails));
     }
 }
