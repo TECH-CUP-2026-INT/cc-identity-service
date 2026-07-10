@@ -183,4 +183,137 @@ class AuthServiceTest {
 
         assertThrows(RuntimeException.class, () -> authService.refreshToken(request));
     }
+
+    @Test
+    void requestPasswordRecovery_existingEnabledUser_sendsOtp() {
+        PasswordRecoveryRequest request = new PasswordRecoveryRequest();
+        request.setEmail("test@example.com");
+    
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+    
+        ApiResponse response = authService.requestPasswordRecovery(request);
+    
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        verify(otpService).generateAndSend(user);
+    }
+    
+    @Test
+    void requestPasswordRecovery_nonExistingUser_returnsGenericResponse() {
+        PasswordRecoveryRequest request = new PasswordRecoveryRequest();
+        request.setEmail("notfound@example.com");
+    
+        when(userRepository.findByEmail("notfound@example.com"))
+                .thenReturn(Optional.empty());
+    
+        ApiResponse response = authService.requestPasswordRecovery(request);
+    
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        verify(otpService, never()).generateAndSend(any(UserEntity.class));
+    }
+    
+    @Test
+    void requestPasswordRecovery_disabledUser_doesNotSendOtp() {
+        PasswordRecoveryRequest request = new PasswordRecoveryRequest();
+        request.setEmail("test@example.com");
+    
+        user.setEnabled(false);
+    
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+    
+        ApiResponse response = authService.requestPasswordRecovery(request);
+    
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        verify(otpService, never()).generateAndSend(any(UserEntity.class));
+    }
+    
+    @Test
+    void resetPassword_success() {
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("test@example.com");
+        request.setCode("123456");
+        request.setNewPassword("newPassword123");
+    
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("newPassword123"))
+                .thenReturn("newHashedPassword");
+        when(userRepository.save(user)).thenReturn(user);
+    
+        ApiResponse response = authService.resetPassword(request);
+    
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertEquals("newHashedPassword", user.getPassword());
+    
+        verify(otpService).verify("123456", user);
+        verify(passwordEncoder).encode("newPassword123");
+        verify(userRepository).save(user);
+    }
+    
+    @Test
+    void resetPassword_userNotFound_throwsException() {
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("notfound@example.com");
+        request.setCode("123456");
+        request.setNewPassword("newPassword123");
+    
+        when(userRepository.findByEmail("notfound@example.com"))
+                .thenReturn(Optional.empty());
+    
+        assertThrows(
+                RuntimeException.class,
+                () -> authService.resetPassword(request)
+        );
+    
+        verify(otpService, never()).verify(anyString(), any(UserEntity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
+    }
+    
+    @Test
+    void resetPassword_disabledUser_throwsException() {
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("test@example.com");
+        request.setCode("123456");
+        request.setNewPassword("newPassword123");
+    
+        user.setEnabled(false);
+    
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+    
+        assertThrows(
+                RuntimeException.class,
+                () -> authService.resetPassword(request)
+        );
+    
+        verify(otpService, never()).verify(anyString(), any(UserEntity.class));
+        verify(userRepository, never()).save(any(UserEntity.class));
+    }
+    
+    @Test
+    void resetPassword_invalidOtp_throwsException() {
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("test@example.com");
+        request.setCode("000000");
+        request.setNewPassword("newPassword123");
+    
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+    
+        doThrow(new RuntimeException("Invalid or expired OTP code"))
+                .when(otpService).verify("000000", user);
+    
+        assertThrows(
+                RuntimeException.class,
+                () -> authService.resetPassword(request)
+        );
+    
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(UserEntity.class));
+    }
 }
