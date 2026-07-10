@@ -6,6 +6,8 @@ import co.edu.escuelaing.techcup.identity.dto.OtpVerifyRequest;
 import co.edu.escuelaing.techcup.identity.dto.RefreshTokenRequest;
 import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
 import co.edu.escuelaing.techcup.identity.service.AuthService;
+import co.edu.escuelaing.techcup.identity.dto.PasswordRecoveryRequest;
+import co.edu.escuelaing.techcup.identity.dto.PasswordResetRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Registration, OTP, login and token refresh")
+@Tag(name = "Authentication", description = "Registration, OTP, login and token refresh and password recovery")
 public class AuthController {
 
     private final AuthService authService;
@@ -68,5 +70,27 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    /**
+     * SCRUM-16 — requests a password recovery OTP.
+     */
+    @Operation(summary = "Request password recovery")
+    @PostMapping("/password-recovery")
+    public ResponseEntity<ApiResponse> requestPasswordRecovery(
+            @Valid @RequestBody PasswordRecoveryRequest request) {
+
+        return ResponseEntity.ok(authService.requestPasswordRecovery(request));
+    }
+
+    /**
+     * SCRUM-16 — validates the OTP and sets a new password.
+     */
+    @Operation(summary = "Reset password")
+    @PostMapping("/password-reset")
+    public ResponseEntity<ApiResponse> resetPassword(
+            @Valid @RequestBody PasswordResetRequest request) {
+
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 }

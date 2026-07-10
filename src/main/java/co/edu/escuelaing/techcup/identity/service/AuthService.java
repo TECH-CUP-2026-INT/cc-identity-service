@@ -9,10 +9,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Main service orchestrating authentication and identity flows.
  * Handles user registration, OTP verification, login, and token refresh.
- * Covers SCRUM-13, SCRUM-14, and SCRUM-15.
+ * Covers SCRUM-13, SCRUM-14, SCRUM-15, SCRUM-16 and SCRUM-17.
  */
 
 @Service
@@ -120,5 +121,41 @@ public class AuthService {
         String newAccessToken = jwtService.generateAccessToken(userDetails);
 
         return new AuthResponse(newAccessToken, request.getRefreshToken(), user.getEmail(), user.getRole().name());
+    }
+
+    /**
+     * Sends a password recovery OTP when the account exists.
+     * The response remains generic to avoid revealing registered emails (SCRUM-16).
+     */
+    @Transactional
+    public ApiResponse requestPasswordRecovery(PasswordRecoveryRequest request) {
+        userRepository.findByEmail(request.getEmail())
+                .filter(UserEntity::isEnabled)
+                .ifPresent(otpService::generateAndSend);
+
+        return new ApiResponse(
+                "If the email is registered, a recovery code has been sent.",
+                true
+        );
+    }
+
+    /**
+     * Validates the recovery OTP and updates the encrypted password (SCRUM-16).
+     */
+    @Transactional
+    public ApiResponse resetPassword(PasswordResetRequest request) {
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired recovery request"));
+
+        if (!user.isEnabled()) {
+            throw new RuntimeException("Invalid or expired recovery request");
+        }
+
+        otpService.verify(request.getCode(), user);
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return new ApiResponse("Password updated successfully.", true);
     }
 }
