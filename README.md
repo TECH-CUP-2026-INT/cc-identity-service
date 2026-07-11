@@ -1,11 +1,12 @@
+# TechCup Identity Service — Referee & Organizer Account Creation
 
-**SCRUM tasks:** SCRUM-13 (OTP verification), SCRUM-14 (user authentication), SCRUM-15 (session management and JWT validation)
+**Requirements implemented:** TC-4 (Referee account creation), TC-5 (Admin/Organizer account setup)
 
 ---
 
 ## Tech Stack
 
-Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · JWT (jjwt 0.12.5) · Spring Security · Spring Mail · MapStruct · Jacoco · Swagger (springdoc 2.8.0) · Docker · GitHub Actions
+Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · Spring Security · Spring Mail · Jacoco
 
 ---
 
@@ -15,41 +16,57 @@ Java 21 · Spring Boot 3.5.6 · Maven · PostgreSQL · JWT (jjwt 0.12.5) · Spri
 src/
 ├── main/
 │   ├── java/co/edu/escuelaing/techcup/identity/
-│   │   ├── entity/          # userEntity, otpCodeEntity
-│   │   ├── repository/      # userRepository, otpCodeRepository
-│   │   ├── dto/             # Request and response objects
-│   │   ├── service/         # Business logic
-│   │   ├── controller/      # REST endpoints
-│   │   ├── config/          # Security, JWT, Swagger, CORS
-│   │   ├── mapper/          # MapStruct mappers
-│   │   └── exception/       # Global exception handling
-│   └── resources/
-│       ├── application.yml       # Base config
-│       ├── application-dev.yml   # Local dev (PostgreSQL + Mailtrap)
-│       └── application-prod.yml  # Production (env vars only)
+│   │   ├── config/
+│   │   │   ├── SecurityConfig.java       # PasswordEncoder bean, @EnableMethodSecurity
+│   │   │   └── OrganizerSeeder.java      # Seeds initial Organizer account (TC-5)
+│   │   ├── controller/
+│   │   │   └── RefereeController.java    # POST /api/v1/referees (TC-4)
+│   │   ├── dto/
+│   │   │   └── RefereeRequestDTO.java
+│   │   ├── entity/
+│   │   │   └── IdType.java               # Enum: CC, TI, CE
+│   │   ├── exception/
+│   │   │   └── BusinessException.java
+│   │   └── service/
+│   │       ├── UserService.java
+│   │       ├── RefereeValidator.java
+│   │       ├── TemporaryPasswordGenerator.java
+│   │       ├── RandomTemporaryPasswordGenerator.java
+│   │       └── FullNameSplitter.java
 └── test/
-    └── resources/
-        └── application.yml   # H2 in-memory for tests
+    └── java/co/edu/escuelaing/techcup/identity/
+        ├── config/
+        │   └── OrganizerSeederTest.java
+        └── service/
+            ├── UserServiceTest.java
+            ├── RefereeValidatorTest.java
+            └── FullNameSplitterTest.java
 ```
 
 ---
 
-## Configuration
+## Business Rules
 
-Profiles: `dev` (default) and `prod`. Switch with `SPRING_PROFILES_ACTIVE=prod`.
+### TC-4 — Referee Account Creation
 
-Required environment variables in prod:
+- Only a user authenticated with role `ORGANIZER` can create referee accounts.
+- Email must belong to the `@gmail.com` domain (personal account, not institutional).
+- ID number must be unique across the system and contain only digits.
+- Full name must be between 3 and 100 characters.
+- Password is generated temporarily and encrypted before persistence.
+- Account is persisted with role `REFEREE` and status `Active`.
+- Credential email and OTP code are triggered upon successful creation.
 
-| Variable | Description |
-|----------|-------------|
-| `DB_URL` | PostgreSQL connection URL |
-| `DB_USER` | Database username |
-| `DB_PASS` | Database password |
-| `JWT_SECRET` | Secret key for signing JWT tokens (min 256 bits) |
-| `MAIL_HOST` | SMTP host |
-| `MAIL_PORT` | SMTP port |
-| `MAIL_USER` | SMTP username |
-| `MAIL_PASS` | SMTP password |
+**Endpoint:** `POST /api/v1/referees`
+Protected with `@PreAuthorize("hasRole('ORGANIZER')")`.
+
+### TC-5 — Admin/Organizer Account Setup
+
+- Not created through any public registration form or API endpoint.
+- Provisioned automatically on application startup via `OrganizerSeeder`.
+- Password is encrypted before persistence.
+- Does not trigger the OTP validation flow.
+- The Organizer role cannot be granted to any other user beyond initial provisioning.
 
 ---
 
@@ -59,37 +76,31 @@ Required environment variables in prod:
 mvn spring-boot:run
 ```
 
-API docs available at: `http://localhost:11711/swagger-ui/index.html#/`
-
-![alt text](src/img/sstests_port_11711.png)
-
-
 ---
 
 ## Running tests
 
 ```bash
-
-docker run --name identity-db -e POSTGRES_DB=identity_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
-
 mvn verify
 ```
 
 Coverage report is at: `target/site/jacoco/index.html`
 
-![alt text](src/img/coverage_feat_ruiz.png)
-
-![alt text](src/img/coverage_config.png)
-
-![alt text](src/img/coverage_controller.png)
-
-![alt text](src/img/coverage_DTO.png)
-
-![alt text](src/img/coverage_exception.png)
-
-![alt text](src/img/coverage_service.png)
-
-![alt text](src/img/coverage_entity.png)
+| Class | Coverage |
+|-------|----------|
+| `UserService` | 100% |
+| `RefereeValidator` | 100% |
+| `FullNameSplitter` | 100% |
+| `OrganizerSeeder` | 100% |
 
 
 
+![Coverage general overview](src/test/resources/image.png)
+
+![Coverage service package](src/test/resources/image2.png)
+
+![Coverage detail 3](src/test/resources/image3.png)
+
+![Coverage detail 4](src/test/resources/image4.png)
+
+![Coverage detail 5](src/test/resources/image5.png)
