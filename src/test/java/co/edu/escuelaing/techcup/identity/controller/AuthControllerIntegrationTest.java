@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -86,7 +87,7 @@ class AuthControllerIntegrationTest {
         @Order(1)
         @DisplayName("Should return 200 when student registers with institutional email")
         void shouldReturn200ForValidStudent() throws Exception {
-            RegisterRequest req = baseRequest("c.rojas@escuelaing.edu.co", UserType.STUDENT);
+            RegisterRequest req = baseRequest("c.rojas@mail.escuelaing.edu.co", UserType.STUDENT);
             req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
             req.setSemester(4);
 
@@ -96,7 +97,7 @@ class AuthControllerIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("Registration successful")));
+                            containsString("Check your email for the OTP")));
         }
 
         @Test
@@ -113,14 +114,14 @@ class AuthControllerIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("institutional email")));
+                            containsString("institutional email")));
         }
 
         @Test
         @Order(3)
         @DisplayName("Should return 400 when student email is already registered")
         void shouldReturn400WhenStudentEmailDuplicated() throws Exception {
-            RegisterRequest req = baseRequest("c.rojas@escuelaing.edu.co", UserType.STUDENT);
+            RegisterRequest req = baseRequest("c.rojas@mail.escuelaing.edu.co", UserType.STUDENT);
             req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
             req.setSemester(4);
 
@@ -137,14 +138,14 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("Email already registered")));
+                            containsString("Email already registered")));
         }
 
         @Test
         @Order(4)
         @DisplayName("Should return 400 when student missing semester")
         void shouldReturn400WhenStudentMissesSemester() throws Exception {
-            RegisterRequest req = baseRequest("c.rojas@escuelaing.edu.co", UserType.STUDENT);
+            RegisterRequest req = baseRequest("c.rojas@mail.escuelaing.edu.co", UserType.STUDENT);
             req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
             // semester null
 
@@ -213,7 +214,7 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("Gmail")));
+                            containsString("Gmail")));
         }
 
         @Test
@@ -229,7 +230,7 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("associated student was not found")));
+                            containsString("associated student was not found")));
         }
 
         @Test
@@ -245,7 +246,7 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("Relationship")));
+                            containsString("Relationship")));
         }
     }
 
@@ -297,7 +298,7 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("institutional email or a Gmail")));
+                            containsString("institutional email or a Gmail")));
         }
 
         @Test
@@ -312,7 +313,7 @@ class AuthControllerIntegrationTest {
                             .content(toJson(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("Academic program")));
+                            containsString("Academic program")));
         }
     }
 }

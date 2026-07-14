@@ -100,7 +100,7 @@ public class AuthService {
      *   - Role defaults to PLAYER.
      */
     private UserEntity registerStudent(RegisterRequest req) {
-        if (!req.getEmail().endsWith(INSTITUTIONAL_SECONDDOMAIN)) {
+        if (!req.getEmail().endsWith(INSTITUTIONAL_DOMAIN)) {
             throw new BusinessException(
                     "Students must register with an institutional email (@mail.escuelaing.edu.co).");
         }
@@ -181,7 +181,7 @@ public class AuthService {
      *   - Role defaults to PLAYER.
      */
     private UserEntity registerGraduate(RegisterRequest req) {
-        boolean hasInstitutional = req.getEmail().endsWith(INSTITUTIONAL_DOMAIN);
+        boolean hasInstitutional = req.getEmail().endsWith(INSTITUTIONAL_SECONDDOMAIN)|| req.getEmail().endsWith(INSTITUTIONAL_DOMAIN);
         boolean hasGmail         = req.getEmail().endsWith(GMAIL_DOMAIN);
 
         if (!hasInstitutional && !hasGmail) {

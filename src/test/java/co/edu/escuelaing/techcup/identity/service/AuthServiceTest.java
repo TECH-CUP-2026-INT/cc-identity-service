@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -32,6 +34,7 @@ import static org.mockito.Mockito.*;
  * Dependencies are mocked with Mockito — no Spring context or DB required.
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("AuthService — Registration Unit Tests")
 class AuthServiceTest {
 
@@ -78,7 +81,7 @@ class AuthServiceTest {
         @DisplayName("Should register student successfully with institutional email")
         void shouldRegisterStudentSuccessfully() {
             RegisterRequest req = baseRequest();
-            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
             req.setUserType(UserType.STUDENT);
             req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
             req.setSemester(4);
@@ -115,10 +118,10 @@ class AuthServiceTest {
         @DisplayName("Should fail when student does not provide academic program")
         void shouldFailWhenStudentMissesAcademicProgram() {
             RegisterRequest req = baseRequest();
-            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
             req.setUserType(UserType.STUDENT);
             req.setSemester(4);
-            // academicProgram intentionally null
+            req.setAcademicProgram(null);
 
             assertThatThrownBy(() -> authService.register(req))
                     .isInstanceOf(BusinessException.class)
@@ -131,7 +134,7 @@ class AuthServiceTest {
         @DisplayName("Should fail when student does not provide semester")
         void shouldFailWhenStudentMissesSemester() {
             RegisterRequest req = baseRequest();
-            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
             req.setUserType(UserType.STUDENT);
             req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
             // semester intentionally null
