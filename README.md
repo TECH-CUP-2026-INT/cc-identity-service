@@ -95,7 +95,7 @@ Coverage report is at: `target/site/jacoco/index.html`
 
 
 
-![Coverage general overview](src/test/resources/image.png)
+![alt text](src/img/JACOCO-POST-FINAL-RUIZ.png)
 
 ![Coverage service package](src/test/resources/image2.png)
 
@@ -104,3 +104,5 @@ Coverage report is at: `target/site/jacoco/index.html`
 ![Coverage detail 4](src/test/resources/image4.png)
 
 ![Coverage detail 5](src/test/resources/image5.png)
+
+
