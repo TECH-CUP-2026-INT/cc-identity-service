@@ -165,7 +165,7 @@ class AuthControllerIntegrationTest {
     @DisplayName("TC-02 — POST /api/auth/register (GUEST)")
     class GuestIntegrationTests {
 
-        private UUID savedStudentId;
+        private String savedStudentId;
 
         @BeforeEach
         void createStudent() {
@@ -222,7 +222,7 @@ class AuthControllerIntegrationTest {
         @DisplayName("Should return 400 when associated student does not exist")
         void shouldReturn400WhenStudentNotFound() throws Exception {
             RegisterRequest req = baseRequest("familiarojas@gmail.com", UserType.GUEST);
-            req.setAssociatedStudentId(UUID.randomUUID());
+            req.setAssociatedStudentId(UUID.randomUUID().toString());
             req.setRelationship("Mother");
 
             mockMvc.perform(post("/api/auth/register")

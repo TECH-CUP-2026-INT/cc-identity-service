@@ -4,7 +4,6 @@ import co.edu.escuelaing.techcup.identity.entity.IdType;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity.UserType;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Request DTO for user self-registration.
@@ -20,7 +19,6 @@ public class RegisterRequest {
 
     // ── Common fields (all user types) ────────────────────────────────────
 
-    /** TC-01/02/03 — Required for all registrations. */
     @NotBlank(message = "First name is required")
     private String firstName;
 
@@ -48,34 +46,24 @@ public class RegisterRequest {
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
-    //STUDENT / GRADUATE fields
+    // ── STUDENT / GRADUATE fields ─────────────────────────────────────────
 
-    /**
-     * Required for STUDENT (TC-01) and GRADUATE (TC-03).
-     * Validated in service layer.
-     */
+    /** Required for STUDENT (TC-01) and GRADUATE (TC-03). */
     private String academicProgram;
 
-    /**
-     * Required for STUDENT (TC-01). Not applicable to GUEST or GRADUATE.
-     * Validated in service layer.
-     */
+    /** Required for STUDENT (TC-01). */
     @Positive(message = "Semester must be a positive number")
     private Integer semester;
 
-    //GUEST
+    // ── GUEST fields ──────────────────────────────────────────────────────
 
     /**
-     * UUID of the registered student this guest is associated with.
+     * String ID of the registered student this guest is associated with.
      * Required for GUEST (TC-02). Must reference an existing STUDENT in the database.
-     * Validated in service layer.
      */
-    private UUID associatedStudentId;
+    private String associatedStudentId;
 
-    /**
-     * Relationship between the guest and the associated student (e.g. "Father", "Friend").
-     * Required for GUEST (TC-02).
-     */
+    /** Relationship between the guest and the associated student (e.g. "Father", "Friend"). */
     private String relationship;
 
     public RegisterRequest() {}
@@ -90,7 +78,7 @@ public class RegisterRequest {
     public LocalDate getDateOfBirth()         { return dateOfBirth; }
     public String    getAcademicProgram()     { return academicProgram; }
     public Integer   getSemester()            { return semester; }
-    public UUID      getAssociatedStudentId() { return associatedStudentId; }
+    public String    getAssociatedStudentId() { return associatedStudentId; }
     public String    getRelationship()        { return relationship; }
 
     public void setFirstName(String firstName)               { this.firstName = firstName; }
@@ -103,6 +91,6 @@ public class RegisterRequest {
     public void setDateOfBirth(LocalDate dateOfBirth)        { this.dateOfBirth = dateOfBirth; }
     public void setAcademicProgram(String academicProgram)   { this.academicProgram = academicProgram; }
     public void setSemester(Integer semester)                { this.semester = semester; }
-    public void setAssociatedStudentId(UUID id)              { this.associatedStudentId = id; }
+    public void setAssociatedStudentId(String id)            { this.associatedStudentId = id; }
     public void setRelationship(String relationship)         { this.relationship = relationship; }
 }
