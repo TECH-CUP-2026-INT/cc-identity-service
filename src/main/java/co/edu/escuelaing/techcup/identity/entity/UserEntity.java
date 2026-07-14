@@ -1,4 +1,5 @@
 package co.edu.escuelaing.techcup.identity.entity;
+<<<<<<< HEAD
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -6,6 +7,11 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+=======
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+>>>>>>> origin/develop
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -35,6 +41,7 @@ public class UserEntity {
     private boolean enabled = false;
     private Role role = Role.USER;
 
+<<<<<<< HEAD
     /** SCRUM-22: Campos requeridos para registro de arbitros. */
     private LocalDate dateOfBirth;
     private IdType idType;
@@ -43,11 +50,31 @@ public class UserEntity {
     private String idNumber;
 
     @CreatedDate
+=======
+    @Enumerated(EnumType.STRING)
+    @Column(name = "id_type")
+    private IdType idType;
+
+    @Column(name = "id_number", unique = true)
+    private String idNumber;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+>>>>>>> origin/develop
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+<<<<<<< HEAD
+=======
+    public enum Role { USER, ADMIN, REFEREE, ORGANIZER }
+
+    public UserEntity() {}
+>>>>>>> origin/develop
     /**
      * SCRUM-22: Roles ampliados para soportar arbitros y organizadores.
      * SCRUM-61: ADMIN no puede ser inhabilitado.
@@ -68,9 +95,15 @@ public class UserEntity {
         this.lastName = builder.lastName;
         this.enabled = builder.enabled;
         this.role = builder.role;
+<<<<<<< HEAD
         this.dateOfBirth = builder.dateOfBirth;
         this.idType = builder.idType;
         this.idNumber = builder.idNumber;
+=======
+        this.idType = builder.idType;
+        this.idNumber = builder.idNumber;
+        this.dateOfBirth = builder.dateOfBirth;
+>>>>>>> origin/develop
     }
 
     public static Builder builder() {
@@ -85,9 +118,15 @@ public class UserEntity {
         private String lastName;
         private boolean enabled = false;
         private Role role = Role.USER;
+<<<<<<< HEAD
         private LocalDate dateOfBirth;
         private IdType idType;
         private String idNumber;
+=======
+        private IdType idType;
+        private String idNumber;
+        private LocalDate dateOfBirth;
+>>>>>>> origin/develop
 
         public Builder id(String id) { this.id = id; return this; }
         public Builder email(String email) { this.email = email; return this; }
@@ -96,9 +135,15 @@ public class UserEntity {
         public Builder lastName(String lastName) { this.lastName = lastName; return this; }
         public Builder enabled(boolean enabled) { this.enabled = enabled; return this; }
         public Builder role(Role role) { this.role = role; return this; }
+<<<<<<< HEAD
         public Builder dateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
         public Builder idType(IdType idType) { this.idType = idType; return this; }
         public Builder idNumber(String idNumber) { this.idNumber = idNumber; return this; }
+=======
+        public Builder idType(IdType idType) { this.idType = idType; return this; }
+        public Builder idNumber(String idNumber) { this.idNumber = idNumber; return this; }
+        public Builder dateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
+>>>>>>> origin/develop
 
         public UserEntity build() { return new UserEntity(this); }
     }
@@ -115,6 +160,9 @@ public class UserEntity {
     public String getIdNumber() { return idNumber; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public IdType getIdType() { return idType; }
+    public String getIdNumber() { return idNumber; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
 
     public void setId(String id) { this.id = id; }
     public void setEmail(String email) { this.email = email; }
@@ -123,7 +171,14 @@ public class UserEntity {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public void setRole(Role role) { this.role = role; }
+<<<<<<< HEAD
     public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
     public void setIdType(IdType idType) { this.idType = idType; }
     public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
 }
+=======
+    public void setIdType(IdType idType) { this.idType = idType; }
+    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+}
+>>>>>>> origin/develop
