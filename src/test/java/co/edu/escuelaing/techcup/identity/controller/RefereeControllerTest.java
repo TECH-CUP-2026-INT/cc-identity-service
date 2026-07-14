@@ -47,7 +47,9 @@ class RefereeControllerTest {
             http.csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((req, res, e) ->
-                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
+                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        .accessDeniedHandler((req,res,e)->
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN,"Forbidden")))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
             return http.build();
         }

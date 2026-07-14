@@ -99,7 +99,7 @@ class UserEntityTest {
     void role_enum_hasFourValues() {
         UserEntity.Role[] roles = UserEntity.Role.values();
         assertEquals(5, roles.length);
-        assertEquals(UserEntity.Role.PLAYER, UserEntity.Role.valueOf("USER"));
+        assertEquals(UserEntity.Role.PLAYER, UserEntity.Role.valueOf("PLAYER"));
         assertEquals(UserEntity.Role.CAPTAIN,UserEntity.Role.valueOf("CAPTAIN"));
         assertEquals(UserEntity.Role.ADMIN, UserEntity.Role.valueOf("ADMIN"));
         assertEquals(UserEntity.Role.REFEREE, UserEntity.Role.valueOf("REFEREE"));
