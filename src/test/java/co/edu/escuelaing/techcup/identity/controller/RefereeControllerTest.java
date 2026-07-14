@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,11 +48,12 @@ class RefereeControllerTest {
         @Order(1)
         public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
             http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((req, res, e) ->
                         res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-                        .accessDeniedHandler((req,res,e)->
-                        res.sendError(HttpServletResponse.SC_FORBIDDEN,"Forbidden")))
+                    .accessDeniedHandler((req, res, e) ->
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
             return http.build();
         }
