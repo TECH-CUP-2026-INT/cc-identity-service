@@ -35,7 +35,7 @@ class UserEntityTest {
                 .dateOfBirth(dob)
                 .build();
 
-        assertEquals(id, user.getId());
+        assertEquals(id.toString(), user.getId());
         assertEquals("user@test.com", user.getEmail());
         assertEquals("hashed-password", user.getPassword());
         assertEquals("Juan", user.getFirstName());
@@ -56,7 +56,7 @@ class UserEntityTest {
         UUID id = UUID.randomUUID();
         LocalDate dob = LocalDate.of(1995, 3, 10);
 
-        user.setId(id);
+        user.setId(id.toString());
         user.setEmail("updated@test.com");
         user.setPassword("new-password");
         user.setFirstName("Ana");
@@ -67,7 +67,7 @@ class UserEntityTest {
         user.setIdNumber("87654321");
         user.setDateOfBirth(dob);
 
-        assertEquals(id, user.getId());
+        assertEquals(id.toString(), user.getId());
         assertEquals("updated@test.com", user.getEmail());
         assertEquals("new-password", user.getPassword());
         assertEquals("Ana", user.getFirstName());
@@ -80,10 +80,10 @@ class UserEntityTest {
     }
 
     /**
-     * Verifica que el rol por defecto al construir es USER y enabled es false.
+     * Verifica que el rol por defecto al construir es PLAYER y enabled es false.
      */
     @Test
-    void defaults_areUserAndDisabled() {
+    void defaults_arePlayerAndDisabled() {
         UserEntity user = UserEntity.builder()
                 .email("default@test.com")
                 .build();
@@ -93,16 +93,16 @@ class UserEntityTest {
     }
 
     /**
-     * Verifica que el enum Role contiene los 4 valores esperados.
+     * Verifica que el enum Role contiene los 5 valores esperados.
      */
     @Test
-    void role_enum_hasFourValues() {
+    void role_enum_hasFiveValues() {
         UserEntity.Role[] roles = UserEntity.Role.values();
         assertEquals(5, roles.length);
-        assertEquals(UserEntity.Role.PLAYER, UserEntity.Role.valueOf("PLAYER"));
-        assertEquals(UserEntity.Role.CAPTAIN,UserEntity.Role.valueOf("CAPTAIN"));
-        assertEquals(UserEntity.Role.ADMIN, UserEntity.Role.valueOf("ADMIN"));
-        assertEquals(UserEntity.Role.REFEREE, UserEntity.Role.valueOf("REFEREE"));
+        assertEquals(UserEntity.Role.PLAYER,    UserEntity.Role.valueOf("PLAYER"));
+        assertEquals(UserEntity.Role.CAPTAIN,   UserEntity.Role.valueOf("CAPTAIN"));
+        assertEquals(UserEntity.Role.ADMIN,     UserEntity.Role.valueOf("ADMIN"));
+        assertEquals(UserEntity.Role.REFEREE,   UserEntity.Role.valueOf("REFEREE"));
         assertEquals(UserEntity.Role.ORGANIZER, UserEntity.Role.valueOf("ORGANIZER"));
     }
 

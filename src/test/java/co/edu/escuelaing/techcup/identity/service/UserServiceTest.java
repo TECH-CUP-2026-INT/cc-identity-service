@@ -120,7 +120,7 @@ class UserServiceTest {
                 .enabled(true)
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
 
         userService.disableUser(userId);
 
@@ -130,12 +130,12 @@ class UserServiceTest {
 
     /**
      * SCRUM-61: Inhabilitar usuario.
-     * Verifica que se lanza excepción si el usuario no existe.
+     * Verifica que se lanza excepcion si el usuario no existe.
      */
     @Test
     void disableUser_userNotFound_throwsBusinessException() {
         UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.empty());
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> userService.disableUser(userId));
@@ -158,7 +158,7 @@ class UserServiceTest {
                 .enabled(true)
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(admin));
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(admin));
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> userService.disableUser(userId));
@@ -168,9 +168,8 @@ class UserServiceTest {
     }
 
     /**
-     * TESTS PARA: 
      * SCRUM-61: Inhabilitar usuario.
-     * Verifica que no se puede inhabilitar un usuario que ya está deshabilitado.
+     * Verifica que no se puede inhabilitar un usuario que ya esta deshabilitado.
      */
     @Test
     void disableUser_alreadyDisabled_throwsBusinessException() {
@@ -182,7 +181,7 @@ class UserServiceTest {
                 .enabled(false)
                 .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> userService.disableUser(userId));

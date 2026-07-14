@@ -191,7 +191,7 @@ class AuthServiceTest {
     @DisplayName("TC-02 — Guest Registration")
     class GuestRegistrationTests {
 
-        private final UUID studentId = UUID.randomUUID();
+        private final String studentId = UUID.randomUUID().toString();
 
         @BeforeEach
         void setupStudentMock() {
@@ -259,7 +259,7 @@ class AuthServiceTest {
         @Test
         @DisplayName("Should fail when associated student does not exist in DB")
         void shouldFailWhenAssociatedStudentNotFound() {
-            UUID nonExistentId = UUID.randomUUID();
+            String nonExistentId = UUID.randomUUID().toString();
             when(userRepository.findByIdAndUserType(nonExistentId, UserType.STUDENT))
                     .thenReturn(Optional.empty());
 
