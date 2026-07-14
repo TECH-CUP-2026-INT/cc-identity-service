@@ -1,37 +1,32 @@
 package co.edu.escuelaing.techcup.identity.repository;
+
 import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-/**
- * Repository interface for OtpCodeEntity persistence operations
- * Provides methods to find, validate, and clean up OTP codes
- * @see OtpCodeEntity
- */
-@Repository
-public interface OtpCodeRepository extends JpaRepository<OtpCodeEntity, UUID> {
 
-    /**
-     * Finds the most recent unused and non-expired OTP for a given user and code.
-     * @param code the OTP code entered by the user
-     * @param user the user who requested the OTP
-     * @param now current timestamp to check expiration
-     * @return an Optional containing the OTP if valid, empty otherwise
-     */
-    Optional<OtpCodeEntity> findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            String code, UserEntity user, LocalDateTime now);
-    /**
-     * Deletes all expired OTP codes for a given user.
-     * @param user the user whose expired OTPs should be removed
-     * @param now current timestamp
-     */
-    @Modifying
-    @Query("DELETE FROM OtpCodeEntity o WHERE o.user = :user AND o.expiresAt < :now")
-    void deleteExpiredByUser(@Param("user") UserEntity user, @Param("now") LocalDateTime now);
+@Repository
+public interface OtpCodeRepository extends MongoRepository<OtpCodeEntity, UUID> {
+
+    Optional<OtpCodeEntity> findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(
+            String code,
+            UUID userId,
+            LocalDateTime now
+    );
+
+    Optional<OtpCodeEntity> findByCodeAndUserIdAndUsedFalseAndExpiresAtAfterAndPurpose(
+            String code,
+            UUID userId,
+            LocalDateTime now,
+            OtpPurpose purpose
+    );
+
+    void deleteByUserIdAndExpiresAtBefore(
+            UUID userId,
+            LocalDateTime now
+    );
 }

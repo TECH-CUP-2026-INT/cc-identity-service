@@ -1,81 +1,151 @@
 package co.edu.escuelaing.techcup.identity.entity;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 /**
- * Represents a one-time password (OTP) code sent to a user via email.
- * Maps to the {@code otp_codes} table in the database.
- * Each OTP is linked to a user, has an expiration time, and can only be used once.
- * Once verified, the used flag is set to true to prevent reuse (SCRUM-13).
- *
- * @see UserEntity
+ * Represents an OTP code stored in MongoDB.
  */
-@Entity
-@Table(name = "otp_codes")
+@Document(collection = "otp_codes")
+@CompoundIndex(
+        name = "otp_validation_idx",
+        def = "{'code': 1, 'userId': 1, 'purpose': 1, 'used': 1, 'expiresAt': 1}"
+)
 public class OtpCodeEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(nullable = false, length = 6)
+
     private String code;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-    @Column(name = "expires_at", nullable = false)
+
+    @Indexed
+    private UUID userId;
+
+    private OtpPurpose purpose;
+
+    @Indexed
     private LocalDateTime expiresAt;
-    @Column(nullable = false)
+
     private boolean used = false;
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    /**
-     * Constructor (empty)
-     */
-    public OtpCodeEntity() {}
+    public OtpCodeEntity() {
+    }
 
-    /**
-     * Private constructor used exclusively by the Builder.
-     * @param builder the builder instance containing the field values
-     */
     private OtpCodeEntity(Builder builder) {
+        this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.code = builder.code;
-        this.user = builder.user;
+        this.userId = builder.userId;
+        this.purpose = builder.purpose;
         this.expiresAt = builder.expiresAt;
         this.used = builder.used;
     }
+
     public static Builder builder() {
         return new Builder();
     }
+
     public static class Builder {
+
+        private UUID id;
         private String code;
-        private UserEntity user;
+        private UUID userId;
+        private OtpPurpose purpose;
         private LocalDateTime expiresAt;
         private boolean used = false;
 
-        public Builder code(String code) { this.code = code; return this; }
-        public Builder user(UserEntity user) { this.user = user; return this; }
-        public Builder expiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; return this; }
-        public Builder used(boolean used) { this.used = used; return this; }
-        public OtpCodeEntity build() { return new OtpCodeEntity(this); }
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder userId(UUID userId) {
+            this.userId = userId;
+            return this;
+        }
+
+        public Builder purpose(OtpPurpose purpose) {
+            this.purpose = purpose;
+            return this;
+        }
+
+        public Builder expiresAt(LocalDateTime expiresAt) {
+            this.expiresAt = expiresAt;
+            return this;
+        }
+
+        public Builder used(boolean used) {
+            this.used = used;
+            return this;
+        }
+
+        public OtpCodeEntity build() {
+            return new OtpCodeEntity(this);
+        }
     }
-    /**
-     * Getters
-     * @return
-     */
-    public UUID getId() { return id; }
-    public String getCode() { return code; }
-    public UserEntity getUser() { return user; }
-    public LocalDateTime getExpiresAt() { return expiresAt; }
-    public boolean isUsed() { return used; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    /**
-     * Setters
-     * @param code
-     */
-    public void setCode(String code) { this.code = code; }
-    public void setUser(UserEntity user) { this.user = user; }
-    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
-    public void setUsed(boolean used) { this.used = used; }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public OtpPurpose getPurpose() {
+        return purpose;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public void setPurpose(OtpPurpose purpose) {
+        this.purpose = purpose;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
+    }
 }

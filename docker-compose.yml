@@ -1,0 +1,49 @@
+services:
+  identity-mongo:
+    image: mongo:7.0
+    container_name: identity-mongo
+    environment:
+      MONGO_INITDB_DATABASE: identity_db
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - identity-mongo-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "mongo",
+          "--password",
+          "mongo",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: identity-service
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:mongo@identity-mongo:27017/identity_db?authSource=admin
+      JWT_SECRET: super-secret-key-that-is-at-least-256-bits-long-for-hs256
+      GOOGLE_CLIENT_ID: test-client-id
+      GOOGLE_CLIENT_SECRET: test-client-secret
+    depends_on:
+      identity-mongo:
+        condition: service_healthy
+    ports:
+      - "11711:11711"
+
+volumes:
+  identity-mongo-data:

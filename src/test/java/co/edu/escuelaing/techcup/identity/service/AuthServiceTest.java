@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.service.AuditService;
 import co.edu.escuelaing.techcup.identity.dto.*;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
@@ -42,6 +43,9 @@ class AuthServiceTest {
 
     @Mock
     private UserDetailsServiceImpl userDetailsService;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private AuthService authService;

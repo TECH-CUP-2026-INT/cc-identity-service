@@ -52,6 +52,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles invalid date range and other illegal argument errors.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(new ApiResponse(ex.getMessage(), false));
+    }
+
+    /**
      * Catches any other RuntimeException not handled above.
      */
     @ExceptionHandler(RuntimeException.class)

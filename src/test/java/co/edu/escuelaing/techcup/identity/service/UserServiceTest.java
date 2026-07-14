@@ -27,6 +27,7 @@ class UserServiceTest {
     private RefereeValidator refereeValidator;
     private TemporaryPasswordGenerator passwordGenerator;
     private FullNameSplitter nameSplitter;
+    private AuditService auditService;
     private UserService userService;
 
     @BeforeEach
@@ -38,10 +39,11 @@ class UserServiceTest {
         refereeValidator = mock(RefereeValidator.class);
         passwordGenerator = mock(TemporaryPasswordGenerator.class);
         nameSplitter = mock(FullNameSplitter.class);
+        auditService = mock(AuditService.class);
 
         userService = new UserService(
                 userRepository, passwordEncoder, otpService, emailService,
-                refereeValidator, passwordGenerator, nameSplitter
+                refereeValidator, passwordGenerator, nameSplitter, auditService
         );
     }
 

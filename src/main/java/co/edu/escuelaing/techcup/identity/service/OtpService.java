@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.service;
 
 import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
+import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.OtpCodeRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,46 +35,63 @@ public class OtpService {
     }
 
     /**
-     * Generates a numeric OTP, saves it to the database, and sends it via email.
-     * Deletes any previous expired OTPs for the user before creating a new one.
-     * @param user the user who requested the OTP
+     * Backward-compatible overload — uses REGISTRATION purpose.
+     * Keeps existing callers (AuthService, UserService) unchanged.
      */
     @Transactional
     public void generateAndSend(UserEntity user) {
-        otpCodeRepository.deleteExpiredByUser(user, LocalDateTime.now());
+        generateAndSend(user, OtpPurpose.REGISTRATION);
+    }
+
+    /**
+     * Generates a numeric OTP with a specific purpose, saves it and sends it via email.
+     */
+    @Transactional
+    public void generateAndSend(UserEntity user, OtpPurpose purpose) {
+        otpCodeRepository.deleteByUserIdAndExpiresAtBefore(
+                user.getId(),
+                LocalDateTime.now()
+        );
 
         String code = generateCode();
 
         OtpCodeEntity otp = OtpCodeEntity.builder()
                 .code(code)
-                .user(user)
+                .userId(user.getId())
                 .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .used(false)
+                .purpose(purpose)
                 .build();
 
         otpCodeRepository.save(otp);
         sendEmail(user.getEmail(), code);
     }
+
     /**
-     * Verifies the OTP code for the given user.
-     * Marks the OTP as used if valid.
-     * @param code the OTP code entered by the user
-     * @param user the user attempting verification
-     * @throws RuntimeException if OTP is invalid or expired
+     * Backward-compatible overload — verifies without purpose filter.
      */
-    
     @Transactional
     public void verify(String code, UserEntity user) {
         OtpCodeEntity otp = otpCodeRepository
-                .findByCodeAndUserAndUsedFalseAndExpiresAtAfter(code, user, LocalDateTime.now())
+                .findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(code,user.getId(),LocalDateTime.now())
                 .orElseThrow(() -> new RuntimeException("Invalid or expired OTP code"));
 
         otp.setUsed(true);
         otpCodeRepository.save(otp);
     }
+
     /**
-     * private helpers 
-     */ 
+     * Verifies the OTP code for the given user and purpose.
+     */
+    @Transactional
+    public void verify(String code, UserEntity user, OtpPurpose purpose) {
+        OtpCodeEntity otp = otpCodeRepository
+                .findByCodeAndUserIdAndUsedFalseAndExpiresAtAfterAndPurpose(code, user.getId(), LocalDateTime.now(), purpose)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired OTP code"));
+
+        otp.setUsed(true);
+        otpCodeRepository.save(otp);
+    }
 
     private String generateCode() {
         SecureRandom random = new SecureRandom();
@@ -91,5 +109,4 @@ public class OtpService {
         message.setText("Your OTP code is: " + code + "\nThis code will expire in " + expirationMinutes + " minutes.");
         mailSender.send(message);
     }
-
 }

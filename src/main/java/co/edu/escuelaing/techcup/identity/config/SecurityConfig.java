@@ -22,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Defines which endpoints are public, enforces JWT-based stateless authentication
  * on all others, and registers the core security beans (PasswordEncoder,
  * AuthenticationProvider, AuthenticationManager).
+ * Also configures OAuth2 login with Google for TC-07.
  */
 @Configuration
 @EnableWebSecurity
@@ -30,32 +31,47 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
-                          UserDetailsServiceImpl userDetailsService) {
+                          UserDetailsServiceImpl userDetailsService,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     /**
      * Main security filter chain.
-     * Public endpoints: /api/auth/** and Swagger UI.
+     * Public endpoints: /api/auth/**, /oauth2/**, /login/oauth2/** and Swagger UI.
      * Everything else requires a valid JWT.
+     * OAuth2 login uses a stateless success handler — no server-side session is kept.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
+                    "/oauth2/**",
+                    "/login/oauth2/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService))
+                .successHandler(oAuth2SuccessHandler)
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -63,10 +79,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Wires UserDetailsService and PasswordEncoder into Spring's
-     * standard username/password authentication flow.
-     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
@@ -74,19 +86,11 @@ public class SecurityConfig {
         return provider;
     }
 
-    /**
-     * BCrypt encoder - used to hash passwords on register
-     * and verify them on login.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Exposes Spring's AuthenticationManager as a bean
-     * so AuthService can call authenticate() directly.
-     */
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {

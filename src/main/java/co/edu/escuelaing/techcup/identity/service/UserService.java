@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.identity.service;
 
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
+import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
+import co.edu.escuelaing.techcup.identity.entity.AuditResult;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,7 @@ public class UserService {
     private final RefereeValidator refereeValidator;
     private final TemporaryPasswordGenerator passwordGenerator;
     private final FullNameSplitter nameSplitter;
+    private final AuditService auditService;
 
     public UserService(UserRepository userRepository,
                         PasswordEncoder passwordEncoder,
@@ -24,7 +27,8 @@ public class UserService {
                         EmailService emailService,
                         RefereeValidator refereeValidator,
                         TemporaryPasswordGenerator passwordGenerator,
-                        FullNameSplitter nameSplitter) {
+                        FullNameSplitter nameSplitter,
+                        AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
@@ -32,6 +36,7 @@ public class UserService {
         this.refereeValidator = refereeValidator;
         this.passwordGenerator = passwordGenerator;
         this.nameSplitter = nameSplitter;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -45,6 +50,9 @@ public class UserService {
         userRepository.save(referee);
 
         notifyReferee(referee, tempPassword);
+
+        auditService.record(AuditEventType.REFEREE_CREATED, AuditResult.SUCCESS,
+                referee.getId(), referee.getEmail(), "Referee account created", null);
     }
 
     private UserEntity buildRefereeEntity(RefereeRequestDTO dto, String[] names, String tempPassword) {

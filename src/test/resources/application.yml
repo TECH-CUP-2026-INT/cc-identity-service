@@ -1,33 +1,42 @@
-#overrides config for unit tests. It swaps PostgreSQL for an in-memory H2 database and disables real email sending, 
-#so tests run fast and isolated without any external dependencies.
+# Test configuration using embedded MongoDB.
 
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+  data:
+    mongodb:
+      database: identity_test
+
   mail:
     host: localhost
     port: 3025
     username: test
     password: test
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope:
+              - email
+              - profile
+
 app:
   jwt:
     secret: test-secret-key-that-is-at-least-256-bits-long-for-testing
     expiration-ms: 900000
     refresh-expiration-ms: 604800000
+
   otp:
     expiration-minutes: 5
     length: 6
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 7.0.14
 
 logging:
   level:
