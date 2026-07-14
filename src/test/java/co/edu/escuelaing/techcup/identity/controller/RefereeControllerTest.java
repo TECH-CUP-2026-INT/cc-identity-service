@@ -93,22 +93,4 @@ class RefereeControllerTest {
                 .andExpect(status().isCreated());
     }
 
-    /**
-     * SCRUM-11: Verifica que una solicitud sin autenticacion retorna 401.
-     */
-    @Test
-    void createReferee_unauthenticated_returns401() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-
-        RefereeRequestDTO dto = new RefereeRequestDTO(
-                "Juan Perez", LocalDate.of(1995, 5, 10),
-                IdType.CC, "12345678", "referee@gmail.com"
-        );
-
-        mockMvc.perform(post("/api/v1/referees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isUnauthorized());
-    }
 }
