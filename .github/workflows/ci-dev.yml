@@ -1,13 +1,14 @@
+# ── CI Pipeline — identity-service ──────────────────────────────────────────
+# Runs on every push and pull request to develop, main and feat/ruiz.
+# Uses the 'test' Spring profile which activates application-test.yml
+# (Flapdoodle embedded MongoDB — no external DB needed in CI).
 name: CI — identity-service
 
 on:
   push:
-    branches:
-      - feat/ruiz
+    branches: [ develop, main, feat/ruiz ]
   pull_request:
-    branches:
-      - develop
-      - feat/ruiz
+    branches: [ develop, main, feat/ruiz ]
 
 jobs:
   build-and-test:
@@ -18,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: "21"
@@ -31,19 +32,25 @@ jobs:
       - name: Run tests
         run: mvn test --no-transfer-progress -Dspring.profiles.active=test
 
-      - name: Upload surefire reports
-        if: failure()
+      - name: Generate coverage report
+        run: mvn jacoco:report --no-transfer-progress
+        if: always()
+
+      - name: Upload coverage report
         uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report-identity
+          path: target/site/jacoco/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: surefire-reports-identity
           path: target/surefire-reports/
-
-      - name: Upload JaCoCo report
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-report
-          path: target/site/jacoco/
+          retention-days: 7
 
   docker-build:
     name: Docker Build
