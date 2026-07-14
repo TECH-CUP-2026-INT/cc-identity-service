@@ -19,25 +19,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
-<<<<<<< HEAD
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * SCRUM-61: Pruebas del controlador de usuarios.
  * Verifica que inhabilitar usuario funcione con ADMIN y retorne 401 sin autenticacion.
-=======
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-/**
- * Pruebas unitarias del controlador de gestion de usuarios.
- * Verifica la inhabilitacion de usuarios y el control de acceso por rol.
- * SCRUM-61: Inhabilitar usuario.
->>>>>>> origin/develop
  */
 @WebMvcTest(UserController.class)
 @Import(UserControllerTest.TestSecurityConfig.class)
@@ -51,13 +38,9 @@ class UserControllerTest {
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((req, res, e) ->
                         res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
-<<<<<<< HEAD
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/users/**").authenticated()
                     .anyRequest().permitAll());
-=======
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
->>>>>>> origin/develop
             return http.build();
         }
     }
@@ -72,41 +55,19 @@ class UserControllerTest {
     private JwtService jwtService;
 
     @MockBean
-<<<<<<< HEAD
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
 
-=======
-    private UserDetailsServiceImpl userDetailsService;
-
-    /**
-     * SCRUM-61: Verifica que un ADMIN puede inhabilitar un usuario exitosamente.
-     */
->>>>>>> origin/develop
     @Test
     @WithMockUser(roles = "ADMIN")
     void disableUser_success() throws Exception {
         UUID userId = UUID.randomUUID();
-<<<<<<< HEAD
 
         mockMvc.perform(patch("/api/users/" + userId + "/disable"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-=======
-        doNothing().when(userService).disableUser(any());
-
-        mockMvc.perform(patch("/api/users/" + userId + "/disable"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("User disabled successfully"));
-    }
-
-    /**
-     * SCRUM-61: Verifica que una solicitud sin autenticacion retorna 401.
-     */
->>>>>>> origin/develop
     @Test
     void disableUser_unauthenticated_returns401() throws Exception {
         UUID userId = UUID.randomUUID();
@@ -114,8 +75,4 @@ class UserControllerTest {
         mockMvc.perform(patch("/api/users/" + userId + "/disable"))
                 .andExpect(status().isUnauthorized());
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/develop

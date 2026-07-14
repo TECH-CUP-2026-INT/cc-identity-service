@@ -30,7 +30,6 @@ public interface UserRepository extends MongoRepository<UserEntity, String> {
      */
     boolean existsByEmail(String email);
 
-<<<<<<< HEAD
     /**
      * SCRUM-22: Verifica si ya existe un usuario con ese numero de identificacion.
      * @param idNumber el numero de documento a verificar
@@ -38,8 +37,3 @@ public interface UserRepository extends MongoRepository<UserEntity, String> {
      */
     boolean existsByIdNumber(String idNumber);
 }
-=======
-    Optional<UserEntity> findByIdNumber(String idNumber);
-    boolean existsByIdNumber(String idNumber);
-}
->>>>>>> origin/develop
