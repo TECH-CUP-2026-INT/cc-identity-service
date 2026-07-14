@@ -1,0 +1,19 @@
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 7.0.2
+spring:
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+app:
+  jwt:
+    secret: test-secret-key-that-is-at-least-256-bits-long-for-testing
+    expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  otp:
+    expiration-minutes: 5
+    length: 6
