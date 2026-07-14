@@ -1,0 +1,24 @@
+# Configuracion de produccion. Todos los valores sensibles se leen
+# exclusivamente de variables de entorno, nada hardcodeado.
+# Logging minimo para reducir ruido.
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER}
+    password: ${MAIL_PASS}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    root: WARN
+    co.edu.escuelaing.techcup: INFO

@@ -1,0 +1,25 @@
+# Configuracion para desarrollo local.
+# Apunta a MongoDB local, usa Mailtrap como servidor de email falso
+# y habilita logging verbose para depuracion.
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/identity_db}
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAIL_USER:tu_usuario_mailtrap}
+    password: ${MAIL_PASS:tu_password_mailtrap}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    co.edu.escuelaing.techcup: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.data.mongodb: DEBUG

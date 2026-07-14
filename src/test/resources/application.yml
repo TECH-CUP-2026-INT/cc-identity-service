@@ -1,19 +1,14 @@
-#overrides config for unit tests. It swaps PostgreSQL for an in-memory H2 database and disables real email sending, 
-#so tests run fast and isolated without any external dependencies.
+# Configuracion para tests unitarios.
+# Flapdoodle provee un MongoDB embebido en memoria automaticamente.
+# El email no se envia realmente en tests.
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 7.0.2
 
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
   mail:
     host: localhost
     port: 3025

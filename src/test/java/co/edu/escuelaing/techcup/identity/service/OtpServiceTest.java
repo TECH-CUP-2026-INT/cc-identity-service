@@ -40,19 +40,19 @@ class OtpServiceTest {
         ReflectionTestUtils.setField(otpService, "expirationMinutes", 5);
         ReflectionTestUtils.setField(otpService, "otpLength", 6);
 
-        user = new UserEntity.Builder()
-            .id(UUID.randomUUID())
-            .email("test@example.com")
-            .firstName("John")
-            .lastName("Doe")
-            .build();
+        user = UserEntity.builder()
+                .id(UUID.randomUUID().toString())
+                .email("test@example.com")
+                .firstName("John")
+                .lastName("Doe")
+                .build();
     }
 
     @Test
     void generateAndSend_savesOtpAndSendsEmail() {
         otpService.generateAndSend(user);
 
-        verify(otpCodeRepository).deleteExpiredByUser(eq(user), any(LocalDateTime.class));
+        verify(otpCodeRepository).deleteByUserIdAndExpiresAtBefore(eq(user.getId()), any(LocalDateTime.class));
         verify(otpCodeRepository).save(any(OtpCodeEntity.class));
         verify(mailSender).send(any(SimpleMailMessage.class));
     }
@@ -62,22 +62,22 @@ class OtpServiceTest {
         otpService.generateAndSend(user);
 
         verify(otpCodeRepository).save(argThat(otp ->
-            otp.getCode().length() == 6 && otp.getCode().matches("\\d{6}")
+                otp.getCode().length() == 6 && otp.getCode().matches("\\d{6}")
         ));
     }
 
     @Test
     void verify_validOtp_marksAsUsed() {
-        OtpCodeEntity otpCode = new OtpCodeEntity.Builder()
-            .code("123456")
-            .user(user)
-            .expiresAt(LocalDateTime.now().plusMinutes(5))
-            .used(false)
-            .build();
+        OtpCodeEntity otpCode = OtpCodeEntity.builder()
+                .code("123456")
+                .userId(user.getId())
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .used(false)
+                .build();
 
-        when(otpCodeRepository.findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            eq("123456"), eq(user), any(LocalDateTime.class)))
-            .thenReturn(Optional.of(otpCode));
+        when(otpCodeRepository.findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(
+                eq("123456"), eq(user.getId()), any(LocalDateTime.class)))
+                .thenReturn(Optional.of(otpCode));
 
         otpService.verify("123456", user);
 
@@ -87,9 +87,9 @@ class OtpServiceTest {
 
     @Test
     void verify_invalidOtp_throwsException() {
-        when(otpCodeRepository.findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            eq("000000"), eq(user), any(LocalDateTime.class)))
-            .thenReturn(Optional.empty());
+        when(otpCodeRepository.findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(
+                eq("000000"), eq(user.getId()), any(LocalDateTime.class)))
+                .thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> otpService.verify("000000", user));
         verify(otpCodeRepository, never()).save(any());
@@ -97,9 +97,9 @@ class OtpServiceTest {
 
     @Test
     void verify_expiredOtp_throwsException() {
-        when(otpCodeRepository.findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            eq("123456"), eq(user), any(LocalDateTime.class)))
-            .thenReturn(Optional.empty());
+        when(otpCodeRepository.findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(
+                eq("123456"), eq(user.getId()), any(LocalDateTime.class)))
+                .thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> otpService.verify("123456", user));
     }
