@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.identity.service;
-
+import java.util.Optional;
+import java.util.UUID;
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
 import co.edu.escuelaing.techcup.identity.entity.IdType;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity;
@@ -11,8 +12,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -92,62 +91,6 @@ class UserServiceTest {
     }
 
     @Test
-    void disableUser_success() {
-        UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder()
-                .id(userId.toString())
-                .email("user@test.com")
-                .role(UserEntity.Role.USER)
-                .enabled(true)
-                .build();
-
-        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
-
-        userService.disableUser(userId);
-
-        assertFalse(user.isEnabled());
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    void disableUser_userNotFound_throwsBusinessException() {
-        UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId.toString())).thenReturn(Optional.empty());
-
-        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
-    }
-
-    @Test
-    void disableUser_adminAccount_throwsBusinessException() {
-        UUID userId = UUID.randomUUID();
-        UserEntity admin = UserEntity.builder()
-                .id(userId.toString())
-                .role(UserEntity.Role.ADMIN)
-                .enabled(true)
-                .build();
-
-        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(admin));
-
-        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void disableUser_alreadyDisabled_throwsBusinessException() {
-        UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder()
-                .id(userId.toString())
-                .role(UserEntity.Role.USER)
-                .enabled(false)
-                .build();
-
-        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
-
-        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     void doesNotSaveIfValidationFails() {
         RefereeRequestDTO dto = new RefereeRequestDTO(
                 "Carlos Ruiz", LocalDate.of(1998, 3, 10), IdType.CC, "11223344", "carlos@hotmail.com"
@@ -161,5 +104,89 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
         verify(emailService, never()).sendRefereeCredentials(anyString(), anyString());
         verify(otpService, never()).generateAndSend(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que un usuario activo puede ser inhabilitado correctamente.
+     */
+    @Test
+    void disableUser_success() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = UserEntity.builder()
+                .id(userId)
+                .email("player@test.com")
+                .role(UserEntity.Role.PLAYER)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
+
+        userService.disableUser(userId);
+
+        assertFalse(user.isEnabled());
+        verify(userRepository).save(user);
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que se lanza excepcion si el usuario no existe.
+     */
+    @Test
+    void disableUser_userNotFound_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.empty());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("User not found", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que no se puede inhabilitar una cuenta con rol ADMIN.
+     */
+    @Test
+    void disableUser_adminAccount_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserEntity admin = UserEntity.builder()
+                .id(userId)
+                .email("admin@test.com")
+                .role(UserEntity.Role.ADMIN)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(admin));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("Admin accounts cannot be disabled", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que no se puede inhabilitar un usuario que ya esta deshabilitado.
+     */
+    @Test
+    void disableUser_alreadyDisabled_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = UserEntity.builder()
+                .id(userId)
+                .email("player@test.com")
+                .role(UserEntity.Role.PLAYER)
+                .enabled(false)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("User is already disabled", ex.getMessage());
+        verify(userRepository, never()).save(any());
     }
 }

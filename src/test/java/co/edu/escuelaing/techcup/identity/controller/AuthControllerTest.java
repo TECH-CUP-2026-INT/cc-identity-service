@@ -1,6 +1,12 @@
 package co.edu.escuelaing.techcup.identity.controller;
 
-import co.edu.escuelaing.techcup.identity.dto.*;
+import co.edu.escuelaing.techcup.identity.dto.AuthResponse;
+import co.edu.escuelaing.techcup.identity.dto.LoginRequest;
+import co.edu.escuelaing.techcup.identity.dto.OtpVerifyRequest;
+import co.edu.escuelaing.techcup.identity.dto.RefreshTokenRequest;
+import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
+import co.edu.escuelaing.techcup.identity.entity.IdType;
+import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.service.AuthService;
 import co.edu.escuelaing.techcup.identity.service.JwtService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
@@ -18,14 +24,21 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * SCRUM-13 y SCRUM-14: Pruebas del controlador de autenticacion.
- * Verifica registro, verificacion de OTP, login y refresh de token.
+ * Pruebas unitarias del controlador de autenticacion.
+ * Cubre los endpoints de registro, verificacion OTP, login y refresco de token.
+ * SCRUM-13: registro y verificacion OTP.
+ * SCRUM-14: login.
+ * SCRUM-15: refresco de token JWT.
  */
 @WebMvcTest(AuthController.class)
 @Import(AuthControllerTest.TestSecurityConfig.class)
@@ -54,16 +67,24 @@ class AuthControllerTest {
     private JwtService jwtService;
 
     @MockBean
-    private UserDetailsServiceImpl userDetailsServiceImpl;
+    private UserDetailsServiceImpl userDetailsService;
 
-
+    /**
+     * SCRUM-13: Verifica que el registro de usuario retorna 200 con mensaje de exito.
+     */
     @Test
     void register_success() throws Exception {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("user@gmail.com");
-        request.setPassword("Password1!");
+        request.setEmail("juan.perez@mail.escuelaing.edu.co");
+        request.setPassword("password123");
         request.setFirstName("Juan");
         request.setLastName("Perez");
+        request.setUserType(UserEntity.UserType.STUDENT);
+        request.setIdType(IdType.CC);
+        request.setIdNumber("1234567890");
+        request.setDateOfBirth(LocalDate.of(2000, 5, 15));
+        request.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+        request.setSemester(4);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,7 +96,7 @@ class AuthControllerTest {
     @Test
     void verifyOtp_success() throws Exception {
         OtpVerifyRequest request = new OtpVerifyRequest();
-        request.setEmail("user@gmail.com");
+        request.setEmail("user@test.com");
         request.setCode("123456");
 
         mockMvc.perform(post("/api/auth/verify-otp")
@@ -84,33 +105,41 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
-
+    /**
+     * SCRUM-14: Verifica que el login retorna 200 con tokens de acceso y refresco.
+     */
     @Test
     void login_success() throws Exception {
         LoginRequest request = new LoginRequest();
-        request.setEmail("user@gmail.com");
-        request.setPassword("Password1!");
+        request.setEmail("user@test.com");
+        request.setPassword("password123");
 
-        when(authService.login(any())).thenReturn(new AuthResponse("access", "refresh", "user@gmail.com", "USER"));
+        AuthResponse authResponse = new AuthResponse("access-token", "refresh-token", "user@test.com", "USER");
+        when(authService.login(any())).thenReturn(authResponse);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("access"));
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
+    /**
+     * SCRUM-15: Verifica que el refresco de token retorna 200 con nuevo token de acceso.
+     */
     @Test
     void refresh_success() throws Exception {
         RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken("some-refresh-token");
+        request.setRefreshToken("valid-refresh-token");
 
-        when(authService.refreshToken(any())).thenReturn(new AuthResponse("newAccess", "newRefresh", "user@gmail.com", "USER"));
+        AuthResponse authResponse = new AuthResponse("new-access-token", "valid-refresh-token", "user@test.com", "USER");
+        when(authService.refreshToken(any())).thenReturn(authResponse);
 
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("newAccess"));
+                .andExpect(jsonPath("$.accessToken").value("new-access-token"));
     }
 }

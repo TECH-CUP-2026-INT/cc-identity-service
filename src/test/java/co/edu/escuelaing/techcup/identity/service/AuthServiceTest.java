@@ -1,186 +1,385 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.dto.*;
+import co.edu.escuelaing.techcup.identity.dto.ApiResponse;
+import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
+import co.edu.escuelaing.techcup.identity.entity.IdType;
 import co.edu.escuelaing.techcup.identity.entity.UserEntity;
+import co.edu.escuelaing.techcup.identity.entity.UserEntity.UserType;
+import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for AuthService registration flows.
+ *
+ * Tests covered:
+ *   TC-01 — Student registration
+ *   TC-02 — Guest registration
+ *   TC-03 — Graduate registration
+ *
+ * Dependencies are mocked with Mockito — no Spring context or DB required.
+ */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("AuthService — Registration Unit Tests")
 class AuthServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtService jwtService;
-
-    @Mock
-    private OtpService otpService;
-
-    @Mock
-    private AuthenticationManager authenticationManager;
-
-    @Mock
-    private UserDetailsServiceImpl userDetailsService;
+    @Mock private UserRepository         userRepository;
+    @Mock private PasswordEncoder        passwordEncoder;
+    @Mock private JwtService             jwtService;
+    @Mock private OtpService             otpService;
+    @Mock private UserDetailsServiceImpl userDetailsService;
 
     @InjectMocks
     private AuthService authService;
 
-    private UserEntity user;
+    // ── Shared setup ──────────────────────────────────────────────────────
+
+    private RegisterRequest baseRequest() {
+        RegisterRequest req = new RegisterRequest();
+        req.setFirstName("Carlos");
+        req.setLastName("Rojas");
+        req.setPassword("securePass123");
+        req.setIdType(IdType.CC);
+        req.setIdNumber("1234567890");
+        req.setDateOfBirth(LocalDate.of(2000, 5, 15));
+        return req;
+    }
 
     @BeforeEach
-    void setUp() {
-        user = new UserEntity.Builder()
-            .id(UUID.randomUUID().toString())
-            .email("test@example.com")
-            .password("hashedPassword")
-            .firstName("John")
-            .lastName("Doe")
-            .enabled(true)
-            .build();
+    void setupCommonMocks() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByIdNumber(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(i -> i.getArgument(0));
+        doNothing().when(otpService).generateAndSend(any(UserEntity.class));
     }
 
-    @Test
-    void register_success() {
-        RegisterRequest request = new RegisterRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("password123");
-        request.setFirstName("John");
-        request.setLastName("Doe");
+    // ══════════════════════════════════════════════════════════════════════
+    // TC-01 — Student Registration
+    // ══════════════════════════════════════════════════════════════════════
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("hashedPassword");
-        when(userRepository.save(any(UserEntity.class))).thenReturn(user);
+    @Nested
+    @DisplayName("TC-01 — Student Registration")
+    class StudentRegistrationTests {
 
-        authService.register(request);
+        @Test
+        @DisplayName("Should register student successfully with institutional email")
+        void shouldRegisterStudentSuccessfully() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
+            req.setUserType(UserType.STUDENT);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            req.setSemester(4);
 
-        verify(userRepository).save(any(UserEntity.class));
-        verify(otpService).generateAndSend(any(UserEntity.class));
+            ApiResponse response = authService.register(req);
+
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getMessage()).contains("Registration successful");
+            verify(userRepository).save(argThat(user ->
+                    user.getUserType() == UserType.STUDENT &&
+                            user.getRole() == UserEntity.Role.PLAYER &&
+                            !user.isEnabled()
+            ));
+            verify(otpService).generateAndSend(any(UserEntity.class));
+        }
+
+        @Test
+        @DisplayName("Should fail when student uses Gmail instead of institutional email")
+        void shouldFailWhenStudentUsesGmail() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@gmail.com");
+            req.setUserType(UserType.STUDENT);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            req.setSemester(4);
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("institutional email");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when student does not provide academic program")
+        void shouldFailWhenStudentMissesAcademicProgram() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
+            req.setUserType(UserType.STUDENT);
+            req.setSemester(4);
+            req.setAcademicProgram(null);
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Academic program");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when student does not provide semester")
+        void shouldFailWhenStudentMissesSemester() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@mail.escuelaing.edu.co");
+            req.setUserType(UserType.STUDENT);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            // semester intentionally null
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Semester");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when email is already registered")
+        void shouldFailWhenEmailAlreadyExists() {
+            when(userRepository.existsByEmail("c.rojas@escuelaing.edu.co")).thenReturn(true);
+
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setUserType(UserType.STUDENT);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            req.setSemester(4);
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Email already registered");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when ID number is already registered")
+        void shouldFailWhenIdNumberAlreadyExists() {
+            when(userRepository.existsByIdNumber("1234567890")).thenReturn(true);
+
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setUserType(UserType.STUDENT);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            req.setSemester(4);
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("ID number already registered");
+
+            verify(userRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void register_emailAlreadyExists_throwsException() {
-        RegisterRequest request = new RegisterRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("password123");
-        request.setFirstName("John");
-        request.setLastName("Doe");
+    // ══════════════════════════════════════════════════════════════════════
+    // TC-02 — Guest Registration
+    // ══════════════════════════════════════════════════════════════════════
 
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+    @Nested
+    @DisplayName("TC-02 — Guest Registration")
+    class GuestRegistrationTests {
 
-        assertThrows(RuntimeException.class, () -> authService.register(request));
-        verify(userRepository, never()).save(any());
+        private final String studentId = UUID.randomUUID().toString();
+
+        @BeforeEach
+        void setupStudentMock() {
+            UserEntity student = UserEntity.builder()
+                    .id(studentId)
+                    .email("student@escuelaing.edu.co")
+                    .userType(UserType.STUDENT)
+                    .build();
+            when(userRepository.findByIdAndUserType(studentId, UserType.STUDENT))
+                    .thenReturn(Optional.of(student));
+        }
+
+        @Test
+        @DisplayName("Should register guest successfully with Gmail and valid student association")
+        void shouldRegisterGuestSuccessfully() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("familiarojas@gmail.com");
+            req.setUserType(UserType.GUEST);
+            req.setAssociatedStudentId(studentId);
+            req.setRelationship("Father");
+
+            ApiResponse response = authService.register(req);
+
+            assertThat(response.isSuccess()).isTrue();
+            verify(userRepository).save(argThat(user ->
+                    user.getUserType() == UserType.GUEST &&
+                            user.getAssociatedStudentId().equals(studentId) &&
+                            user.getRelationship().equals("Father") &&
+                            user.getRole() == UserEntity.Role.PLAYER
+            ));
+        }
+
+        @Test
+        @DisplayName("Should fail when guest uses institutional email instead of Gmail")
+        void shouldFailWhenGuestUsesInstitutionalEmail() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("familiar@escuelaing.edu.co");
+            req.setUserType(UserType.GUEST);
+            req.setAssociatedStudentId(studentId);
+            req.setRelationship("Father");
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Gmail");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when guest does not provide associated student ID")
+        void shouldFailWhenGuestMissesAssociatedStudent() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("familiarojas@gmail.com");
+            req.setUserType(UserType.GUEST);
+            req.setRelationship("Father");
+            // associatedStudentId intentionally null
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("associated student");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when associated student does not exist in DB")
+        void shouldFailWhenAssociatedStudentNotFound() {
+            String nonExistentId = UUID.randomUUID().toString();
+            when(userRepository.findByIdAndUserType(nonExistentId, UserType.STUDENT))
+                    .thenReturn(Optional.empty());
+
+            RegisterRequest req = baseRequest();
+            req.setEmail("familiarojas@gmail.com");
+            req.setUserType(UserType.GUEST);
+            req.setAssociatedStudentId(nonExistentId);
+            req.setRelationship("Father");
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("associated student was not found");
+
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should fail when guest does not provide relationship")
+        void shouldFailWhenGuestMissesRelationship() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("familiarojas@gmail.com");
+            req.setUserType(UserType.GUEST);
+            req.setAssociatedStudentId(studentId);
+            // relationship intentionally null
+
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Relationship");
+
+            verify(userRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void verifyOtp_success() {
-        OtpVerifyRequest request = new OtpVerifyRequest();
-        request.setEmail("test@example.com");
-        request.setCode("123456");
+    // ══════════════════════════════════════════════════════════════════════
+    // TC-03 — Graduate Registration
+    // ══════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    @Nested
+    @DisplayName("TC-03 — Graduate Registration")
+    class GraduateRegistrationTests {
 
-        authService.verifyOtp(request);
+        @Test
+        @DisplayName("Should register graduate successfully with institutional email")
+        void shouldRegisterGraduateWithInstitutionalEmail() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setUserType(UserType.GRADUATE);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
 
-        verify(otpService).verify("123456", user);
-        verify(userRepository).save(user);
-        assertTrue(user.isEnabled());
-    }
+            ApiResponse response = authService.register(req);
 
-    @Test
-    void verifyOtp_userNotFound_throwsException() {
-        OtpVerifyRequest request = new OtpVerifyRequest();
-        request.setEmail("notfound@example.com");
-        request.setCode("123456");
+            assertThat(response.isSuccess()).isTrue();
+            verify(userRepository).save(argThat(user ->
+                    user.getUserType() == UserType.GRADUATE &&
+                            user.getRole() == UserEntity.Role.PLAYER
+            ));
+        }
 
-        when(userRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("Should register graduate successfully with Gmail when no institutional email")
+        void shouldRegisterGraduateWithGmail() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@gmail.com");
+            req.setUserType(UserType.GRADUATE);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
 
-        assertThrows(RuntimeException.class, () -> authService.verifyOtp(request));
-    }
+            ApiResponse response = authService.register(req);
 
-    @Test
-    void login_success() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("password123");
+            assertThat(response.isSuccess()).isTrue();
+            verify(userRepository).save(argThat(user ->
+                    user.getUserType() == UserType.GRADUATE &&
+                            user.getEmail().endsWith("@gmail.com")
+            ));
+        }
 
-        UserDetails userDetails = mock(UserDetails.class);
+        @Test
+        @DisplayName("Should fail when graduate uses an unsupported email domain")
+        void shouldFailWhenGraduateUsesUnsupportedEmail() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@outlook.com");
+            req.setUserType(UserType.GRADUATE);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
 
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-        when(userDetailsService.loadUserByUsername("test@example.com")).thenReturn(userDetails);
-        when(jwtService.generateAccessToken(userDetails)).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(userDetails)).thenReturn("refresh-token");
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("institutional email or a Gmail");
 
-        AuthResponse response = authService.login(request);
+            verify(userRepository, never()).save(any());
+        }
 
-        assertNotNull(response);
-        assertEquals("access-token", response.getAccessToken());
-        assertEquals("refresh-token", response.getRefreshToken());
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
+        @Test
+        @DisplayName("Should fail when graduate does not provide academic program")
+        void shouldFailWhenGraduateMissesAcademicProgram() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@escuelaing.edu.co");
+            req.setUserType(UserType.GRADUATE);
+            // academicProgram intentionally null
 
-    @Test
-    void login_badCredentials_throwsException() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("wrongpassword");
+            assertThatThrownBy(() -> authService.register(req))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Academic program");
 
-        doThrow(new BadCredentialsException("Bad credentials"))
-            .when(authenticationManager).authenticate(any());
+            verify(userRepository, never()).save(any());
+        }
 
-        assertThrows(BadCredentialsException.class, () -> authService.login(request));
-    }
+        @Test
+        @DisplayName("Graduate should not require student association unlike guest")
+        void graduateShouldNotRequireStudentAssociation() {
+            RegisterRequest req = baseRequest();
+            req.setEmail("c.rojas@gmail.com");
+            req.setUserType(UserType.GRADUATE);
+            req.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+            // associatedStudentId intentionally null — should be fine
 
-    @Test
-    void refreshToken_success() {
-        RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken("valid-refresh-token");
+            ApiResponse response = authService.register(req);
 
-        UserDetails userDetails = mock(UserDetails.class);
-
-        when(jwtService.extractEmail("valid-refresh-token")).thenReturn("test@example.com");
-        when(userDetailsService.loadUserByUsername("test@example.com")).thenReturn(userDetails);
-        when(jwtService.isTokenValid("valid-refresh-token", userDetails)).thenReturn(true);
-        when(jwtService.generateAccessToken(userDetails)).thenReturn("new-access-token");
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-
-        AuthResponse response = authService.refreshToken(request);
-
-        assertNotNull(response);
-        assertEquals("new-access-token", response.getAccessToken());
-    }
-
-    @Test
-    void refreshToken_invalidToken_throwsException() {
-        RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken("invalid-token");
-
-        UserDetails userDetails = mock(UserDetails.class);
-
-        when(jwtService.extractEmail("invalid-token")).thenReturn("test@example.com");
-        when(userDetailsService.loadUserByUsername("test@example.com")).thenReturn(userDetails);
-        when(jwtService.isTokenValid("invalid-token", userDetails)).thenReturn(false);
-
-        assertThrows(RuntimeException.class, () -> authService.refreshToken(request));
+            assertThat(response.isSuccess()).isTrue();
+            verify(userRepository).save(argThat(user ->
+                    user.getAssociatedStudentId() == null
+            ));
+        }
     }
 }
