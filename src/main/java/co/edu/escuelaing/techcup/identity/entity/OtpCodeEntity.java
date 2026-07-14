@@ -1,81 +1,75 @@
 package co.edu.escuelaing.techcup.identity.entity;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
-import java.util.UUID;
+
 /**
- * Represents a one-time password (OTP) code sent to a user via email.
- * Maps to the {@code otp_codes} table in the database.
- * Each OTP is linked to a user, has an expiration time, and can only be used once.
- * Once verified, the used flag is set to true to prevent reuse (SCRUM-13).
+ * Representa un codigo OTP de un solo uso enviado al usuario por email.
+ * Mapeado a la coleccion {@code otp_codes} en MongoDB.
+ * Cada OTP esta vinculado al ID del usuario, tiene fecha de expiracion y solo puede usarse una vez.
+ * Una vez verificado, el campo used se marca true para evitar reuso (SCRUM-13).
  *
  * @see UserEntity
  */
-@Entity
-@Table(name = "otp_codes")
+@Document(collection = "otp_codes")
 public class OtpCodeEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    @Column(nullable = false, length = 6)
+    private String id;
+
     private String code;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-    @Column(name = "expires_at", nullable = false)
+
+    /** ID del usuario propietario de este OTP. Referencia a UserEntity. */
+    private String userId;
+
     private LocalDateTime expiresAt;
-    @Column(nullable = false)
     private boolean used = false;
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    /**
-     * Constructor (empty)
-     */
     public OtpCodeEntity() {}
 
     /**
-     * Private constructor used exclusively by the Builder.
-     * @param builder the builder instance containing the field values
+     * Constructor privado usado exclusivamente por el Builder.
+     * @param builder instancia del builder con los valores de los campos
      */
     private OtpCodeEntity(Builder builder) {
         this.code = builder.code;
-        this.user = builder.user;
+        this.userId = builder.userId;
         this.expiresAt = builder.expiresAt;
         this.used = builder.used;
     }
+
     public static Builder builder() {
         return new Builder();
     }
+
     public static class Builder {
         private String code;
-        private UserEntity user;
+        private String userId;
         private LocalDateTime expiresAt;
         private boolean used = false;
 
         public Builder code(String code) { this.code = code; return this; }
-        public Builder user(UserEntity user) { this.user = user; return this; }
+        public Builder userId(String userId) { this.userId = userId; return this; }
         public Builder expiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; return this; }
         public Builder used(boolean used) { this.used = used; return this; }
         public OtpCodeEntity build() { return new OtpCodeEntity(this); }
     }
-    /**
-     * Getters
-     * @return
-     */
-    public UUID getId() { return id; }
+
+    public String getId() { return id; }
     public String getCode() { return code; }
-    public UserEntity getUser() { return user; }
+    public String getUserId() { return userId; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public boolean isUsed() { return used; }
     public LocalDateTime getCreatedAt() { return createdAt; }
-    /**
-     * Setters
-     * @param code
-     */
+
     public void setCode(String code) { this.code = code; }
-    public void setUser(UserEntity user) { this.user = user; }
+    public void setUserId(String userId) { this.userId = userId; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
     public void setUsed(boolean used) { this.used = used; }
 }

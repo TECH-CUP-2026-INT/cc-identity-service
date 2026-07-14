@@ -7,14 +7,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 /**
- * Service responsible for OTP generation, email delivery, and verification.
- * Implements SCRUM-13: double factor OTP validation.
+ * Servicio responsable de la generacion, envio por email y verificacion de OTP.
+ * Implementa SCRUM-13: validacion de doble factor OTP.
+ * Usa MongoDB a traves de OtpCodeRepository, almacenando el userId como referencia.
  */
 @Service
 public class OtpService {
@@ -34,19 +34,18 @@ public class OtpService {
     }
 
     /**
-     * Generates a numeric OTP, saves it to the database, and sends it via email.
-     * Deletes any previous expired OTPs for the user before creating a new one.
-     * @param user the user who requested the OTP
+     * Genera un OTP numerico, lo guarda en MongoDB y lo envia por email.
+     * Elimina OTPs expirados del usuario antes de crear uno nuevo.
+     * @param user el usuario que solicito el OTP
      */
-    @Transactional
     public void generateAndSend(UserEntity user) {
-        otpCodeRepository.deleteExpiredByUser(user, LocalDateTime.now());
+        otpCodeRepository.deleteByUserIdAndExpiresAtBefore(user.getId(), LocalDateTime.now());
 
         String code = generateCode();
 
         OtpCodeEntity otp = OtpCodeEntity.builder()
                 .code(code)
-                .user(user)
+                .userId(user.getId())
                 .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .used(false)
                 .build();
@@ -54,26 +53,22 @@ public class OtpService {
         otpCodeRepository.save(otp);
         sendEmail(user.getEmail(), code);
     }
+
     /**
-     * Verifies the OTP code for the given user.
-     * Marks the OTP as used if valid.
-     * @param code the OTP code entered by the user
-     * @param user the user attempting verification
-     * @throws RuntimeException if OTP is invalid or expired
+     * Verifica el codigo OTP para el usuario dado.
+     * Marca el OTP como usado si es valido.
+     * @param code el codigo OTP ingresado por el usuario
+     * @param user el usuario que intenta verificar
+     * @throws RuntimeException si el OTP es invalido o esta expirado
      */
-    
-    @Transactional
     public void verify(String code, UserEntity user) {
         OtpCodeEntity otp = otpCodeRepository
-                .findByCodeAndUserAndUsedFalseAndExpiresAtAfter(code, user, LocalDateTime.now())
+                .findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(code, user.getId(), LocalDateTime.now())
                 .orElseThrow(() -> new RuntimeException("Invalid or expired OTP code"));
 
         otp.setUsed(true);
         otpCodeRepository.save(otp);
     }
-    /**
-     * private helpers 
-     */ 
 
     private String generateCode() {
         SecureRandom random = new SecureRandom();
@@ -91,5 +86,4 @@ public class OtpService {
         message.setText("Your OTP code is: " + code + "\nThis code will expire in " + expirationMinutes + " minutes.");
         mailSender.send(message);
     }
-
 }

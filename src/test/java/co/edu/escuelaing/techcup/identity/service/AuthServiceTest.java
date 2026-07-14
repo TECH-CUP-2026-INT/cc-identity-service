@@ -51,7 +51,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         user = new UserEntity.Builder()
-            .id(UUID.randomUUID())
+            .id(UUID.randomUUID().toString())
             .email("test@example.com")
             .password("hashedPassword")
             .firstName("John")

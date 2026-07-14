@@ -6,7 +6,6 @@ import co.edu.escuelaing.techcup.identity.service.JwtService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import co.edu.escuelaing.techcup.identity.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,15 +23,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Pruebas unitarias del controlador de arbitros.
- * Verifica la creacion de arbitros y el control de acceso por rol.
- * SCRUM-11: creacion de cuenta de arbitro.
+ * SCRUM-22: Pruebas del controlador de arbitros.
+ * Verifica que solo ORGANIZER pueda crear arbitros y que no autenticados reciban 401.
  */
 @WebMvcTest(RefereeController.class)
 @Import(RefereeControllerTest.TestSecurityConfig.class)
@@ -46,13 +42,18 @@ class RefereeControllerTest {
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((req, res, e) ->
                         res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/v1/referees/**").authenticated()
+                    .anyRequest().permitAll());
             return http.build();
         }
     }
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private UserService userService;
@@ -61,46 +62,31 @@ class RefereeControllerTest {
     private JwtService jwtService;
 
     @MockBean
-    private UserDetailsServiceImpl userDetailsService;
+    private UserDetailsServiceImpl userDetailsServiceImpl;
 
-    /**
-     * SCRUM-11: Verifica que un ORGANIZER puede crear un arbitro exitosamente.
-     */
+
     @Test
     @WithMockUser(roles = "ORGANIZER")
     void createReferee_success() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-
         RefereeRequestDTO dto = new RefereeRequestDTO(
-                "Juan Perez", LocalDate.of(1995, 5, 10),
-                IdType.CC, "12345678", "referee@gmail.com"
+                "Maria Lopez", LocalDate.of(1990, 3, 10), IdType.CC, "11223344", "maria@gmail.com"
         );
-
-        doNothing().when(userService).createReferee(any());
 
         mockMvc.perform(post("/api/v1/referees")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated());
     }
 
-    /**
-     * SCRUM-11: Verifica que una solicitud sin autenticacion retorna 401.
-     */
     @Test
     void createReferee_unauthenticated_returns401() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-
         RefereeRequestDTO dto = new RefereeRequestDTO(
-                "Juan Perez", LocalDate.of(1995, 5, 10),
-                IdType.CC, "12345678", "referee@gmail.com"
+                "Maria Lopez", LocalDate.of(1990, 3, 10), IdType.CC, "11223344", "maria@gmail.com"
         );
 
         mockMvc.perform(post("/api/v1/referees")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized());
     }
 }

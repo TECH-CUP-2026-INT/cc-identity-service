@@ -6,8 +6,6 @@ import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 @Service
@@ -37,7 +35,6 @@ public class UserService {
         this.nameSplitter = nameSplitter;
     }
 
-    @Transactional
     public void createReferee(RefereeRequestDTO dto) {
         refereeValidator.validate(dto);
         String tempPassword = passwordGenerator.generate();
@@ -76,9 +73,8 @@ public class UserService {
      * @param userId identificador UUID del usuario a inhabilitar
      * @throws BusinessException si el usuario no existe, es ADMIN, o ya está deshabilitado
      */
-    @Transactional
     public void disableUser(UUID userId) {
-        UserEntity user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId.toString())
                 .orElseThrow(() -> new BusinessException("User not found"));
 
         if (user.getRole() == UserEntity.Role.ADMIN) {

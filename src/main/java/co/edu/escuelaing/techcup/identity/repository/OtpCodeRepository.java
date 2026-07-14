@@ -1,37 +1,35 @@
 package co.edu.escuelaing.techcup.identity.repository;
+
 import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
+
 /**
- * Repository interface for OtpCodeEntity persistence operations
- * Provides methods to find, validate, and clean up OTP codes
+ * Repositorio de persistencia para OtpCodeEntity en MongoDB.
+ * Provee metodos para buscar, validar y limpiar codigos OTP.
+ *
  * @see OtpCodeEntity
  */
 @Repository
-public interface OtpCodeRepository extends JpaRepository<OtpCodeEntity, UUID> {
+public interface OtpCodeRepository extends MongoRepository<OtpCodeEntity, String> {
 
     /**
-     * Finds the most recent unused and non-expired OTP for a given user and code.
-     * @param code the OTP code entered by the user
-     * @param user the user who requested the OTP
-     * @param now current timestamp to check expiration
-     * @return an Optional containing the OTP if valid, empty otherwise
+     * Busca el OTP no usado y no expirado para un usuario y codigo dados.
+     * @param code el codigo OTP ingresado por el usuario
+     * @param userId el ID del usuario que solicito el OTP
+     * @param now timestamp actual para verificar expiracion
+     * @return Optional con el OTP si es valido, vacio si no
      */
-    Optional<OtpCodeEntity> findByCodeAndUserAndUsedFalseAndExpiresAtAfter(
-            String code, UserEntity user, LocalDateTime now);
+    Optional<OtpCodeEntity> findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(
+            String code, String userId, LocalDateTime now);
+
     /**
-     * Deletes all expired OTP codes for a given user.
-     * @param user the user whose expired OTPs should be removed
-     * @param now current timestamp
+     * Elimina todos los OTP expirados de un usuario dado.
+     * @param userId el ID del usuario cuyos OTP expirados deben eliminarse
+     * @param now timestamp actual
      */
-    @Modifying
-    @Query("DELETE FROM OtpCodeEntity o WHERE o.user = :user AND o.expiresAt < :now")
-    void deleteExpiredByUser(@Param("user") UserEntity user, @Param("now") LocalDateTime now);
+    void deleteByUserIdAndExpiresAtBefore(String userId, LocalDateTime now);
 }
