@@ -1,8 +1,8 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
-import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
+import co.edu.escuelaing.techcup.identity.document.OtpCodeDocument;
+import co.edu.escuelaing.techcup.identity.document.OtpPurpose;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.repository.OtpCodeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class OtpServiceTest {
     private JavaMailSender mailSender;
 
     private OtpService otpService;
-    private UserEntity user;
+    private UserDocument user;
 
     @BeforeEach
     void setUp() {
@@ -49,14 +49,14 @@ class OtpServiceTest {
                 6
         );
 
-        user = UserEntity.builder()
+        user = UserDocument.builder()
                 .id(UUID.randomUUID())
                 .email("test@example.com")
                 .password("hashed-password")
                 .firstName("John")
                 .lastName("Doe")
                 .enabled(true)
-                .role(UserEntity.Role.USER)
+                .role(UserDocument.Role.USER)
                 .build();
     }
 
@@ -69,12 +69,12 @@ class OtpServiceTest {
                 any(LocalDateTime.class)
         );
 
-        ArgumentCaptor<OtpCodeEntity> captor =
-                ArgumentCaptor.forClass(OtpCodeEntity.class);
+        ArgumentCaptor<OtpCodeDocument> captor =
+                ArgumentCaptor.forClass(OtpCodeDocument.class);
 
         verify(otpCodeRepository).save(captor.capture());
 
-        OtpCodeEntity savedOtp = captor.getValue();
+        OtpCodeDocument savedOtp = captor.getValue();
 
         assertNotNull(savedOtp.getId());
         assertEquals(user.getId(), savedOtp.getUserId());
@@ -88,7 +88,7 @@ class OtpServiceTest {
 
     @Test
     void verify_validOtp_marksOtpAsUsed() {
-        OtpCodeEntity otp = OtpCodeEntity.builder()
+        OtpCodeDocument otp = OtpCodeDocument.builder()
                 .id(UUID.randomUUID())
                 .code("123456")
                 .userId(user.getId())
@@ -131,7 +131,7 @@ class OtpServiceTest {
 
     @Test
     void verifyWithPurpose_validOtp_marksOtpAsUsed() {
-        OtpCodeEntity otp = OtpCodeEntity.builder()
+        OtpCodeDocument otp = OtpCodeDocument.builder()
                 .id(UUID.randomUUID())
                 .code("654321")
                 .userId(user.getId())

@@ -1,8 +1,8 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.IdType;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
-import co.edu.escuelaing.techcup.identity.entity.IdType;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,14 +61,14 @@ class UserServiceTest {
 
         verify(refereeValidator).validate(dto);
 
-        ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
+        ArgumentCaptor<UserDocument> captor = ArgumentCaptor.forClass(UserDocument.class);
         verify(userRepository).save(captor.capture());
 
-        UserEntity saved = captor.getValue();
+        UserDocument saved = captor.getValue();
         assertEquals("Juan", saved.getFirstName());
         assertEquals("Perez", saved.getLastName());
         assertEquals("juan@gmail.com", saved.getEmail());
-        assertEquals(UserEntity.Role.REFEREE, saved.getRole());
+        assertEquals(UserDocument.Role.REFEREE, saved.getRole());
         assertTrue(saved.isEnabled());
         assertEquals("hashedPassword", saved.getPassword());
         assertEquals(IdType.CC, saved.getIdType());
@@ -88,7 +88,7 @@ class UserServiceTest {
         userService.createReferee(dto);
 
         verify(emailService).sendRefereeCredentials(eq("ana@gmail.com"), eq("temp5678"));
-        verify(otpService).generateAndSend(any(UserEntity.class));
+        verify(otpService).generateAndSend(any(UserDocument.class));
     }
 
     @Test

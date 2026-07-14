@@ -1,8 +1,8 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.entity.OtpCodeEntity;
-import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
+import co.edu.escuelaing.techcup.identity.document.OtpCodeDocument;
+import co.edu.escuelaing.techcup.identity.document.OtpPurpose;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.repository.OtpCodeRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -39,7 +39,7 @@ public class OtpService {
      * Keeps existing callers (AuthService, UserService) unchanged.
      */
     @Transactional
-    public void generateAndSend(UserEntity user) {
+    public void generateAndSend(UserDocument user) {
         generateAndSend(user, OtpPurpose.REGISTRATION);
     }
 
@@ -47,7 +47,7 @@ public class OtpService {
      * Generates a numeric OTP with a specific purpose, saves it and sends it via email.
      */
     @Transactional
-    public void generateAndSend(UserEntity user, OtpPurpose purpose) {
+    public void generateAndSend(UserDocument user, OtpPurpose purpose) {
         otpCodeRepository.deleteByUserIdAndExpiresAtBefore(
                 user.getId(),
                 LocalDateTime.now()
@@ -55,7 +55,7 @@ public class OtpService {
 
         String code = generateCode();
 
-        OtpCodeEntity otp = OtpCodeEntity.builder()
+        OtpCodeDocument otp = OtpCodeDocument.builder()
                 .code(code)
                 .userId(user.getId())
                 .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
@@ -71,8 +71,8 @@ public class OtpService {
      * Backward-compatible overload — verifies without purpose filter.
      */
     @Transactional
-    public void verify(String code, UserEntity user) {
-        OtpCodeEntity otp = otpCodeRepository
+    public void verify(String code, UserDocument user) {
+        OtpCodeDocument otp = otpCodeRepository
                 .findByCodeAndUserIdAndUsedFalseAndExpiresAtAfter(code,user.getId(),LocalDateTime.now())
                 .orElseThrow(() -> new RuntimeException("Invalid or expired OTP code"));
 
@@ -84,8 +84,8 @@ public class OtpService {
      * Verifies the OTP code for the given user and purpose.
      */
     @Transactional
-    public void verify(String code, UserEntity user, OtpPurpose purpose) {
-        OtpCodeEntity otp = otpCodeRepository
+    public void verify(String code, UserDocument user, OtpPurpose purpose) {
+        OtpCodeDocument otp = otpCodeRepository
                 .findByCodeAndUserIdAndUsedFalseAndExpiresAtAfterAndPurpose(code, user.getId(), LocalDateTime.now(), purpose)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired OTP code"));
 

@@ -1,4 +1,4 @@
-package co.edu.escuelaing.techcup.identity.entity;
+package co.edu.escuelaing.techcup.identity.document;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -13,7 +13,7 @@ import java.util.UUID;
  * Events are stored in the MongoDB audit_events collection.
  */
 @Document(collection = "audit_events")
-public class AuditEventEntity {
+public class AuditEventDocument {
 
     @Id
     private UUID id;
@@ -36,10 +36,10 @@ public class AuditEventEntity {
 
     private String detail;
 
-    public AuditEventEntity() {
+    public AuditEventDocument() {
     }
 
-    private AuditEventEntity(Builder builder) {
+    private AuditEventDocument(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.timestamp = builder.timestamp;
         this.userId = builder.userId;
@@ -105,8 +105,8 @@ public class AuditEventEntity {
             return this;
         }
 
-        public AuditEventEntity build() {
-            return new AuditEventEntity(this);
+        public AuditEventDocument build() {
+            return new AuditEventDocument(this);
         }
     }
 

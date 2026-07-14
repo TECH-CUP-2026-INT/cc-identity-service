@@ -1,7 +1,7 @@
 package co.edu.escuelaing.techcup.identity.controller;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
 import co.edu.escuelaing.techcup.identity.dto.AuditEventResponse;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
 import co.edu.escuelaing.techcup.identity.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

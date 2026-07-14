@@ -1,4 +1,4 @@
-package co.edu.escuelaing.techcup.identity.entity;
+package co.edu.escuelaing.techcup.identity.document;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -15,7 +15,7 @@ import java.util.UUID;
  * Each user has a unique email, encrypted password, role and account status.
  */
 @Document(collection = "users")
-public class UserEntity {
+public class UserDocument {
 
     @Id
     private UUID id;
@@ -53,10 +53,10 @@ public class UserEntity {
         ORGANIZER
     }
 
-    public UserEntity() {
+    public UserDocument() {
     }
 
-    private UserEntity(Builder builder) {
+    private UserDocument(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.email = builder.email;
         this.password = builder.password;
@@ -136,8 +136,8 @@ public class UserEntity {
             return this;
         }
 
-        public UserEntity build() {
-            return new UserEntity(this);
+        public UserDocument build() {
+            return new UserDocument(this);
         }
     }
 

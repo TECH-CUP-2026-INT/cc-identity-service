@@ -1,7 +1,7 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.IdType;
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
-import co.edu.escuelaing.techcup.identity.entity.IdType;
 import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,6 +1,6 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -34,10 +34,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findByEmail(email)
+        UserDocument user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 /**
- * Maps the UserEntity to a Spring Security UserDetails object.
+ * Maps the UserDocument to a Spring Security UserDetails object.
  * trues for: accountNonExpired, credentialsNonExpired, accountNonLocked
  */
         return new User(

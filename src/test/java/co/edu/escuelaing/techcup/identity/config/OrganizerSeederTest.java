@@ -1,6 +1,6 @@
 package co.edu.escuelaing.techcup.identity.config;
 
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class OrganizerSeederTest {
 
         seeder.run();
 
-        verify(userRepository).save(any(UserEntity.class));
+        verify(userRepository).save(any(UserDocument.class));
     }
 
     @Test
@@ -39,6 +39,6 @@ class OrganizerSeederTest {
 
         seeder.run();
 
-        verify(userRepository, never()).save(any(UserEntity.class));
+        verify(userRepository, never()).save(any(UserDocument.class));
     }
 }

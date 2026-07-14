@@ -1,10 +1,10 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
+import co.edu.escuelaing.techcup.identity.document.OtpPurpose;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.AuthResponse;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
-import co.edu.escuelaing.techcup.identity.entity.AuditResult;
-import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -18,9 +18,9 @@ import java.util.Set;
 @Service
 public class GmailLoginService {
 
-    private static final Set<UserEntity.Role> ALLOWED_ROLES =
-            Set.of(UserEntity.Role.USER, UserEntity.Role.REFEREE,
-                   UserEntity.Role.ORGANIZER, UserEntity.Role.ADMIN);
+    private static final Set<UserDocument.Role> ALLOWED_ROLES =
+            Set.of(UserDocument.Role.USER, UserDocument.Role.REFEREE,
+                   UserDocument.Role.ORGANIZER, UserDocument.Role.ADMIN);
 
     private final UserRepository userRepository;
     private final OtpService otpService;
@@ -42,7 +42,7 @@ public class GmailLoginService {
 
     @Transactional
     public void initiateLogin(String googleEmail) {
-        UserEntity user = userRepository.findByEmail(googleEmail)
+        UserDocument user = userRepository.findByEmail(googleEmail)
                 .orElseThrow(() -> {
                     auditService.record(AuditEventType.GMAIL_LOGIN_FAILED, AuditResult.FAILURE,
                             null, googleEmail, "Gmail login failed — email not registered", null);
@@ -71,7 +71,7 @@ public class GmailLoginService {
 
     @Transactional
     public AuthResponse completeLogin(String email, String code) {
-        UserEntity user = userRepository.findByEmail(email)
+        UserDocument user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
         if (!user.isEnabled()) {

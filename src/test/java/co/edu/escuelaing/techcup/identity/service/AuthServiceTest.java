@@ -1,8 +1,7 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.service.AuditService;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.*;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,11 +49,11 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    private UserEntity user;
+    private UserDocument user;
 
     @BeforeEach
     void setUp() {
-        user = new UserEntity.Builder()
+        user = new UserDocument.Builder()
             .id(UUID.randomUUID())
             .email("test@example.com")
             .password("hashedPassword")
@@ -74,12 +73,12 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashedPassword");
-        when(userRepository.save(any(UserEntity.class))).thenReturn(user);
+        when(userRepository.save(any(UserDocument.class))).thenReturn(user);
 
         authService.register(request);
 
-        verify(userRepository).save(any(UserEntity.class));
-        verify(otpService).generateAndSend(any(UserEntity.class));
+        verify(userRepository).save(any(UserDocument.class));
+        verify(otpService).generateAndSend(any(UserDocument.class));
     }
 
     @Test
@@ -215,7 +214,7 @@ class AuthServiceTest {
     
         assertNotNull(response);
         assertTrue(response.isSuccess());
-        verify(otpService, never()).generateAndSend(any(UserEntity.class));
+        verify(otpService, never()).generateAndSend(any(UserDocument.class));
     }
     
     @Test
@@ -232,7 +231,7 @@ class AuthServiceTest {
     
         assertNotNull(response);
         assertTrue(response.isSuccess());
-        verify(otpService, never()).generateAndSend(any(UserEntity.class));
+        verify(otpService, never()).generateAndSend(any(UserDocument.class));
     }
     
     @Test
@@ -274,8 +273,8 @@ class AuthServiceTest {
                 () -> authService.resetPassword(request)
         );
     
-        verify(otpService, never()).verify(anyString(), any(UserEntity.class));
-        verify(userRepository, never()).save(any(UserEntity.class));
+        verify(otpService, never()).verify(anyString(), any(UserDocument.class));
+        verify(userRepository, never()).save(any(UserDocument.class));
     }
     
     @Test
@@ -295,8 +294,8 @@ class AuthServiceTest {
                 () -> authService.resetPassword(request)
         );
     
-        verify(otpService, never()).verify(anyString(), any(UserEntity.class));
-        verify(userRepository, never()).save(any(UserEntity.class));
+        verify(otpService, never()).verify(anyString(), any(UserDocument.class));
+        verify(userRepository, never()).save(any(UserDocument.class));
     }
     
     @Test
@@ -318,6 +317,6 @@ class AuthServiceTest {
         );
     
         verify(passwordEncoder, never()).encode(anyString());
-        verify(userRepository, never()).save(any(UserEntity.class));
+        verify(userRepository, never()).save(any(UserDocument.class));
     }
 }

@@ -1,9 +1,9 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
-import co.edu.escuelaing.techcup.identity.entity.AuditResult;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,7 +46,7 @@ public class UserService {
         String tempPassword = passwordGenerator.generate();
         String[] names = nameSplitter.split(dto.fullName());
 
-        UserEntity referee = buildRefereeEntity(dto, names, tempPassword);
+        UserDocument referee = buildRefereeEntity(dto, names, tempPassword);
         userRepository.save(referee);
 
         notifyReferee(referee, tempPassword);
@@ -55,21 +55,21 @@ public class UserService {
                 referee.getId(), referee.getEmail(), "Referee account created", null);
     }
 
-    private UserEntity buildRefereeEntity(RefereeRequestDTO dto, String[] names, String tempPassword) {
-        return UserEntity.builder()
+    private UserDocument buildRefereeEntity(RefereeRequestDTO dto, String[] names, String tempPassword) {
+        return UserDocument.builder()
                 .firstName(names[0])
                 .lastName(names[1])
                 .dateOfBirth(dto.dateOfBirth())
                 .idType(dto.idType())
                 .idNumber(dto.idNumber())
                 .email(dto.email())
-                .role(UserEntity.Role.REFEREE)
+                .role(UserDocument.Role.REFEREE)
                 .enabled(true)
                 .password(passwordEncoder.encode(tempPassword))
                 .build();
     }
 
-    private void notifyReferee(UserEntity referee, String tempPassword) {
+    private void notifyReferee(UserDocument referee, String tempPassword) {
         emailService.sendRefereeCredentials(referee.getEmail(), tempPassword);
         otpService.generateAndSend(referee);
     }

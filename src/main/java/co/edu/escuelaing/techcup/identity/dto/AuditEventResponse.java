@@ -1,11 +1,11 @@
 package co.edu.escuelaing.techcup.identity.dto;
 
-import co.edu.escuelaing.techcup.identity.entity.AuditEventEntity;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
-import co.edu.escuelaing.techcup.identity.entity.AuditResult;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import co.edu.escuelaing.techcup.identity.document.AuditEventDocument;
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
 
 public class AuditEventResponse {
 
@@ -20,7 +20,7 @@ public class AuditEventResponse {
 
     public AuditEventResponse() {}
 
-    public static AuditEventResponse from(AuditEventEntity entity) {
+    public static AuditEventResponse from(AuditEventDocument entity) {
         AuditEventResponse dto = new AuditEventResponse();
         dto.id          = entity.getId();
         dto.timestamp   = entity.getTimestamp();

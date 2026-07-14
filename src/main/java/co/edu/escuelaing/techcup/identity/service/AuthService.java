@@ -1,7 +1,7 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.*;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,13 +48,13 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
-        UserEntity user = UserEntity.builder()
+        UserDocument user = UserDocument.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .enabled(false)
-                .role(UserEntity.Role.USER)
+                .role(UserDocument.Role.USER)
                 .build();
 
         userRepository.save(user);
@@ -70,7 +70,7 @@ public class AuthService {
      */
     @Transactional
     public ApiResponse verifyOtp(OtpVerifyRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail())
+        UserDocument user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         otpService.verify(request.getCode(), user);
@@ -92,7 +92,7 @@ public class AuthService {
         );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-        UserEntity user = userRepository.findByEmail(request.getEmail())
+        UserDocument user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String accessToken = jwtService.generateAccessToken(userDetails);
@@ -115,7 +115,7 @@ public class AuthService {
             throw new RuntimeException("Invalid or expired refresh token");
         }
 
-        UserEntity user = userRepository.findByEmail(email)
+        UserDocument user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String newAccessToken = jwtService.generateAccessToken(userDetails);
@@ -130,7 +130,7 @@ public class AuthService {
     @Transactional
     public ApiResponse requestPasswordRecovery(PasswordRecoveryRequest request) {
         userRepository.findByEmail(request.getEmail())
-                .filter(UserEntity::isEnabled)
+                .filter(UserDocument::isEnabled)
                 .ifPresent(otpService::generateAndSend);
 
         return new ApiResponse(
@@ -144,7 +144,7 @@ public class AuthService {
      */
     @Transactional
     public ApiResponse resetPassword(PasswordResetRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail())
+        UserDocument user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid or expired recovery request"));
 
         if (!user.isEnabled()) {

@@ -1,9 +1,8 @@
 package co.edu.escuelaing.techcup.identity.service;
 
-import co.edu.escuelaing.techcup.identity.service.AuditService;
+import co.edu.escuelaing.techcup.identity.document.OtpPurpose;
+import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.dto.AuthResponse;
-import co.edu.escuelaing.techcup.identity.entity.OtpPurpose;
-import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,18 +34,18 @@ class GmailLoginServiceTest {
     @InjectMocks
     private GmailLoginService gmailLoginService;
 
-    private UserEntity enabledUser;
+    private UserDocument enabledUser;
 
     @BeforeEach
     void setUp() {
-        enabledUser = UserEntity.builder()
+        enabledUser = UserDocument.builder()
                 .id(UUID.randomUUID())
                 .email("user@gmail.com")
                 .password("hashed")
                 .firstName("Test")
                 .lastName("User")
                 .enabled(true)
-                .role(UserEntity.Role.USER)
+                .role(UserDocument.Role.USER)
                 .build();
     }
 

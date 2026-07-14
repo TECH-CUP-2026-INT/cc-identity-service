@@ -1,9 +1,9 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventDocument;
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
 import co.edu.escuelaing.techcup.identity.dto.AuditEventResponse;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventEntity;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
-import co.edu.escuelaing.techcup.identity.entity.AuditResult;
 import co.edu.escuelaing.techcup.identity.repository.AuditEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class AuditService {
             String detail
     ) {
         try {
-            AuditEventEntity event = AuditEventEntity.builder()
+            AuditEventDocument event = AuditEventDocument.builder()
                     .eventType(eventType)
                     .result(result)
                     .userId(userId)
@@ -95,14 +95,14 @@ public class AuditService {
 
         long total = mongoTemplate.count(
                 query,
-                AuditEventEntity.class
+                AuditEventDocument.class
         );
 
         query.with(pageable);
 
-        List<AuditEventEntity> events = mongoTemplate.find(
+        List<AuditEventDocument> events = mongoTemplate.find(
                 query,
-                AuditEventEntity.class
+                AuditEventDocument.class
         );
 
         List<AuditEventResponse> responses = events.stream()

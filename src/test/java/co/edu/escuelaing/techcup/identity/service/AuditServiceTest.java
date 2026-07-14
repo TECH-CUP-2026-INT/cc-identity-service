@@ -1,9 +1,9 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventDocument;
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
 import co.edu.escuelaing.techcup.identity.dto.AuditEventResponse;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventEntity;
-import co.edu.escuelaing.techcup.identity.entity.AuditEventType;
-import co.edu.escuelaing.techcup.identity.entity.AuditResult;
 import co.edu.escuelaing.techcup.identity.repository.AuditEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,12 +58,12 @@ class AuditServiceTest {
                 "Login completed correctly"
         );
 
-        ArgumentCaptor<AuditEventEntity> captor =
-                ArgumentCaptor.forClass(AuditEventEntity.class);
+        ArgumentCaptor<AuditEventDocument> captor =
+                ArgumentCaptor.forClass(AuditEventDocument.class);
 
         verify(auditEventRepository).save(captor.capture());
 
-        AuditEventEntity event = captor.getValue();
+        AuditEventDocument event = captor.getValue();
 
         assertNotNull(event.getId());
         assertNotNull(event.getTimestamp());
@@ -79,7 +79,7 @@ class AuditServiceTest {
     void record_repositoryFails_doesNotThrow() {
         doThrow(new RuntimeException("Mongo unavailable"))
                 .when(auditEventRepository)
-                .save(any(AuditEventEntity.class));
+                .save(any(AuditEventDocument.class));
 
         assertDoesNotThrow(() -> auditService.record(
                 AuditEventType.LOGIN_FAILED,
@@ -94,16 +94,16 @@ class AuditServiceTest {
     @Test
     void findEvents_withoutFilters_returnsPage() {
         Pageable pageable = PageRequest.of(0, 10);
-        AuditEventEntity event = createAuditEvent();
+        AuditEventDocument event = createAuditEvent();
 
         when(mongoTemplate.count(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(1L);
 
         when(mongoTemplate.find(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(List.of(event));
 
         Page<AuditEventResponse> result = auditService.findEvents(
@@ -119,12 +119,12 @@ class AuditServiceTest {
 
         verify(mongoTemplate).count(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         );
 
         verify(mongoTemplate).find(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         );
     }
 
@@ -139,17 +139,17 @@ class AuditServiceTest {
         LocalDateTime endDate =
                 LocalDateTime.now().plusDays(1);
 
-        AuditEventEntity event = createAuditEvent();
+        AuditEventDocument event = createAuditEvent();
         event.setUserId(userId);
 
         when(mongoTemplate.count(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(1L);
 
         when(mongoTemplate.find(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(List.of(event));
 
         Page<AuditEventResponse> result = auditService.findEvents(
@@ -170,12 +170,12 @@ class AuditServiceTest {
 
         when(mongoTemplate.count(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(0L);
 
         when(mongoTemplate.find(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(List.of());
 
         Page<AuditEventResponse> result = auditService.findEvents(
@@ -195,12 +195,12 @@ class AuditServiceTest {
 
         when(mongoTemplate.count(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(0L);
 
         when(mongoTemplate.find(
                 any(Query.class),
-                eq(AuditEventEntity.class)
+                eq(AuditEventDocument.class)
         )).thenReturn(List.of());
 
         Page<AuditEventResponse> result = auditService.findEvents(
@@ -238,8 +238,8 @@ class AuditServiceTest {
         verifyNoInteractions(mongoTemplate);
     }
 
-    private AuditEventEntity createAuditEvent() {
-        return AuditEventEntity.builder()
+    private AuditEventDocument createAuditEvent() {
+        return AuditEventDocument.builder()
                 .id(UUID.randomUUID())
                 .timestamp(LocalDateTime.now())
                 .eventType(AuditEventType.LOGIN_SUCCESS)

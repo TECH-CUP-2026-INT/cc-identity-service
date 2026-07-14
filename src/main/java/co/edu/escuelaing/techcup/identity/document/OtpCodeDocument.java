@@ -1,4 +1,4 @@
-package co.edu.escuelaing.techcup.identity.entity;
+package co.edu.escuelaing.techcup.identity.document;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -17,7 +17,7 @@ import java.util.UUID;
         name = "otp_validation_idx",
         def = "{'code': 1, 'userId': 1, 'purpose': 1, 'used': 1, 'expiresAt': 1}"
 )
-public class OtpCodeEntity {
+public class OtpCodeDocument {
 
     @Id
     private UUID id;
@@ -37,10 +37,10 @@ public class OtpCodeEntity {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    public OtpCodeEntity() {
+    public OtpCodeDocument() {
     }
 
-    private OtpCodeEntity(Builder builder) {
+    private OtpCodeDocument(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.code = builder.code;
         this.userId = builder.userId;
@@ -92,8 +92,8 @@ public class OtpCodeEntity {
             return this;
         }
 
-        public OtpCodeEntity build() {
-            return new OtpCodeEntity(this);
+        public OtpCodeDocument build() {
+            return new OtpCodeDocument(this);
         }
     }
 
