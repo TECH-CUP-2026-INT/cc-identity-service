@@ -30,4 +30,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * @return true if a user with that email exists
      */
     boolean existsByEmail(String email);
+
+    /**
+     * SCRUM-22: Verifica si ya existe un usuario con ese numero de identificacion.
+     * @param idNumber el numero de documento a verificar
+     * @return true si ya existe un usuario con ese idNumber
+     */
+    boolean existsByIdNumber(String idNumber);
 }

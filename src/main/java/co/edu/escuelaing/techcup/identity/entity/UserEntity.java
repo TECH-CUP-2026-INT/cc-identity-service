@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -41,6 +43,17 @@ public class UserEntity {
     @Column(nullable = false)
     private Role role = Role.USER;
 
+    /** SCRUM-22: Campos requeridos para registro de arbitros. */
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "id_type")
+    private IdType idType;
+
+    @Column(name = "id_number", unique = true)
+    private String idNumber;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -49,7 +62,11 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum Role { USER, ADMIN }
+    /**
+     * SCRUM-22: Roles ampliados para soportar arbitros y organizadores.
+     * SCRUM-61: ADMIN no puede ser inhabilitado.
+     */
+    public enum Role { USER, ADMIN, ORGANIZER, REFEREE }
 
     // Constructor 
     public UserEntity() {}
@@ -66,6 +83,9 @@ public class UserEntity {
         this.lastName = builder.lastName;
         this.enabled = builder.enabled;
         this.role = builder.role;
+        this.dateOfBirth = builder.dateOfBirth;
+        this.idType = builder.idType;
+        this.idNumber = builder.idNumber;
     }
 
     public static Builder builder() {
@@ -80,6 +100,9 @@ public class UserEntity {
         private String lastName;
         private boolean enabled = false;
         private Role role = Role.USER;
+        private LocalDate dateOfBirth;
+        private IdType idType;
+        private String idNumber;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder email(String email) { this.email = email; return this; }
@@ -88,6 +111,9 @@ public class UserEntity {
         public Builder lastName(String lastName) { this.lastName = lastName; return this; }
         public Builder enabled(boolean enabled) { this.enabled = enabled; return this; }
         public Builder role(Role role) { this.role = role; return this; }
+        public Builder dateOfBirth(@NotNull LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
+        public Builder idType(IdType idType) { this.idType = idType; return this; }
+        public Builder idNumber(String idNumber) { this.idNumber = idNumber; return this; }
 
         public UserEntity build() { return new UserEntity(this); }
     }
@@ -102,6 +128,9 @@ public class UserEntity {
     public String getLastName() { return lastName; }
     public boolean isEnabled() { return enabled; }
     public Role getRole() { return role; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public IdType getIdType() { return idType; }
+    public String getIdNumber() { return idNumber; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
@@ -116,4 +145,7 @@ public class UserEntity {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
     public void setRole(Role role) { this.role = role; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public void setIdType(IdType idType) { this.idType = idType; }
+    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
 }
