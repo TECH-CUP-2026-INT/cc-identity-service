@@ -1,65 +1,51 @@
 package co.edu.escuelaing.techcup.identity.entity;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
- * 
- * Represents a registered user in the system
- * Maps to the {@code users} table in the database, 
- * Each user has a unique email, a hashed password, and a rolethat controls their access level within the application
- * 
- * Accounts start disabled (enabled = false) until the user completes OTP email verification (SCRUM-13 JIRA)
- * Timestamps (createdAt, updatedAt) are managed automatically by Hibernate and should never be set manually.
- *  @see OtpCodeEntity
+ * Representa un usuario registrado en el sistema.
+ * Mapeado a la coleccion {@code users} en MongoDB.
+ * Cada usuario tiene un email unico, password hasheado y un rol
+ * que controla su nivel de acceso.
+ *
+ * Las cuentas inician deshabilitadas hasta que el usuario completa la verificacion OTP (SCRUM-13).
+ * Los timestamps son gestionados automaticamente por Spring Data MongoDB (@EnableMongoAuditing).
+ *
+ * @see OtpCodeEntity
  */
-@Entity
-@Table(name = "users")
+@Document(collection = "users")
 public class UserEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Id
+    private String id;
+
+    @Indexed(unique = true)
     private String email;
 
-    @Column(nullable = false)
     private String password;
-
-    @Column(name = "first_name", nullable = false)
     private String firstName;
-
-    @Column(name = "last_name", nullable = false)
     private String lastName;
-
-    @Column(nullable = false)
     private boolean enabled = false;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Role role = Role.USER;
 
     /** SCRUM-22: Campos requeridos para registro de arbitros. */
-    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "id_type")
     private IdType idType;
 
-    @Column(name = "id_number", unique = true)
+    @Indexed(unique = true, sparse = true)
     private String idNumber;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     /**
@@ -68,14 +54,13 @@ public class UserEntity {
      */
     public enum Role { USER, ADMIN, ORGANIZER, REFEREE }
 
-    // Constructor 
     public UserEntity() {}
-    /**
-     * 
-     * @param builder is the builder instance containing the field values
-     */
 
-    private UserEntity (Builder builder) {
+    /**
+     * Constructor privado usado exclusivamente por el Builder.
+     * @param builder instancia del builder con los valores de los campos
+     */
+    private UserEntity(Builder builder) {
         this.id = builder.id;
         this.email = builder.email;
         this.password = builder.password;
@@ -93,7 +78,7 @@ public class UserEntity {
     }
 
     public static class Builder {
-        private UUID id;
+        private String id;
         private String email;
         private String password;
         private String firstName;
@@ -104,24 +89,21 @@ public class UserEntity {
         private IdType idType;
         private String idNumber;
 
-        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder id(String id) { this.id = id; return this; }
         public Builder email(String email) { this.email = email; return this; }
         public Builder password(String password) { this.password = password; return this; }
         public Builder firstName(String firstName) { this.firstName = firstName; return this; }
         public Builder lastName(String lastName) { this.lastName = lastName; return this; }
         public Builder enabled(boolean enabled) { this.enabled = enabled; return this; }
         public Builder role(Role role) { this.role = role; return this; }
-        public Builder dateOfBirth(@NotNull LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
+        public Builder dateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
         public Builder idType(IdType idType) { this.idType = idType; return this; }
         public Builder idNumber(String idNumber) { this.idNumber = idNumber; return this; }
 
         public UserEntity build() { return new UserEntity(this); }
     }
-    /**
-     * Getters
-     * @return
-     */
-    public UUID getId() { return id; }
+
+    public String getId() { return id; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public String getFirstName() { return firstName; }
@@ -134,11 +116,7 @@ public class UserEntity {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
-    /**
-     * Setters
-     * @param id
-     */
-    public void setId(UUID id) { this.id = id; }
+    public void setId(String id) { this.id = id; }
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setFirstName(String firstName) { this.firstName = firstName; }

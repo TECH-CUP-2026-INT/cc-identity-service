@@ -56,6 +56,7 @@ class AuthControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
+
     @Test
     void register_success() throws Exception {
         RegisterRequest request = new RegisterRequest();

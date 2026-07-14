@@ -8,7 +8,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 /**
  * Main service orchestrating authentication and identity flows.
  * Handles user registration, OTP verification, login, and token refresh.
@@ -41,7 +40,6 @@ public class AuthService {
      * @return confirmation message
      * 
      */
-    @Transactional
     public ApiResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already registered");
@@ -67,7 +65,6 @@ public class AuthService {
      * @param request email and OTP code
      * @return confirmation message
      */
-    @Transactional
     public ApiResponse verifyOtp(OtpVerifyRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));

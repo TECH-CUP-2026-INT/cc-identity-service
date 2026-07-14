@@ -10,7 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import co.edu.escuelaing.techcup.identity.exception.BusinessException;
+
 import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,6 +91,62 @@ class UserServiceTest {
 
         verify(emailService).sendRefereeCredentials(eq("ana@gmail.com"), eq("temp5678"));
         verify(otpService).generateAndSend(any(UserEntity.class));
+    }
+
+    @Test
+    void disableUser_success() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = UserEntity.builder()
+                .id(userId.toString())
+                .email("user@test.com")
+                .role(UserEntity.Role.USER)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
+
+        userService.disableUser(userId);
+
+        assertFalse(user.isEnabled());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void disableUser_userNotFound_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
+    }
+
+    @Test
+    void disableUser_adminAccount_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserEntity admin = UserEntity.builder()
+                .id(userId.toString())
+                .role(UserEntity.Role.ADMIN)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(admin));
+
+        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void disableUser_alreadyDisabled_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserEntity user = UserEntity.builder()
+                .id(userId.toString())
+                .role(UserEntity.Role.USER)
+                .enabled(false)
+                .build();
+
+        when(userRepository.findById(userId.toString())).thenReturn(Optional.of(user));
+
+        assertThrows(BusinessException.class, () -> userService.disableUser(userId));
+        verify(userRepository, never()).save(any());
     }
 
     @Test

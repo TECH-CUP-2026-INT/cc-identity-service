@@ -64,6 +64,7 @@ class RefereeControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
+
     @Test
     @WithMockUser(roles = "ORGANIZER")
     void createReferee_success() throws Exception {

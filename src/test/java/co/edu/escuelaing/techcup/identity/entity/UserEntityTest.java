@@ -8,14 +8,14 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * SCRUM-13: Pruebas unitarias de la entidad UserEntity.
+ * SCRUM-13: Pruebas unitarias de la entidad UserEntity con MongoDB.
  * Verifica el builder, setters y valores por defecto.
  */
 class UserEntityTest {
 
     @Test
     void builder_setsAllFieldsCorrectly() {
-        UUID id = UUID.randomUUID();
+        String id = UUID.randomUUID().toString();
         LocalDate dob = LocalDate.of(1995, 6, 15);
 
         UserEntity user = UserEntity.builder()
@@ -73,8 +73,7 @@ class UserEntityTest {
 
     @Test
     void role_enum_hasFourValues() {
-        UserEntity.Role[] roles = UserEntity.Role.values();
-        assertEquals(4, roles.length);
+        assertEquals(4, UserEntity.Role.values().length);
     }
 
     @Test

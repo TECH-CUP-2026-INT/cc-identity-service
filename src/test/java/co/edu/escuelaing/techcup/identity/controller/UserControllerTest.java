@@ -57,6 +57,7 @@ class UserControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void disableUser_success() throws Exception {
