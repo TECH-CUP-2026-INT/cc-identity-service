@@ -5,6 +5,8 @@ import co.edu.escuelaing.techcup.identity.dto.LoginRequest;
 import co.edu.escuelaing.techcup.identity.dto.OtpVerifyRequest;
 import co.edu.escuelaing.techcup.identity.dto.RefreshTokenRequest;
 import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
+import co.edu.escuelaing.techcup.identity.entity.IdType;
+import co.edu.escuelaing.techcup.identity.entity.UserEntity;
 import co.edu.escuelaing.techcup.identity.service.AuthService;
 import co.edu.escuelaing.techcup.identity.service.JwtService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
@@ -21,6 +23,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -71,17 +75,23 @@ class AuthControllerTest {
     @Test
     void register_success() throws Exception {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("user@test.com");
+        request.setEmail("juan.perez@mail.escuelaing.edu.co");
         request.setPassword("password123");
         request.setFirstName("Juan");
         request.setLastName("Perez");
+        request.setUserType(UserEntity.UserType.STUDENT);
+        request.setIdType(IdType.CC);
+        request.setIdNumber("1234567890");
+        request.setDateOfBirth(LocalDate.of(2000, 5, 15));
+        request.setAcademicProgram("INGENIERIA_DE_SISTEMAS");
+        request.setSemester(4);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
-}
+    }
 
     @Test
     void verifyOtp_success() throws Exception {
