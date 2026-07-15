@@ -1,0 +1,28 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/identity_service_test
+      auto-index-creation: false
+  mail:
+    username: test@techcup.local
+    password: test
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+jwt:
+  secret: defaultSecretKeyForDevelopmentOnlyChangeInProduction2026!
+  expiration-ms: 3600000
+otp:
+  expiration-minutes: 5
+  max-attempts: 3
+  resend-cooldown-seconds: 60
+  length: 6
+recovery:
+  expiration-minutes: 15
+logging:
+  level:
+    root: WARN
