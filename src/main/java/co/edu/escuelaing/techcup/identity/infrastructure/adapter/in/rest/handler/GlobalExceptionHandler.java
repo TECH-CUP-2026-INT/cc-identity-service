@@ -108,7 +108,7 @@ public class GlobalExceptionHandler {
         }
 
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("timestamp", LocalDateTime.now(java.time.ZoneOffset.UTC).toString());
         body.put("errorCode", "VALIDATION_ERROR");
         body.put("message", "Validation failed");
         body.put("errors", fieldErrors);
@@ -123,7 +123,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String errorCode, String message) {
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("timestamp", LocalDateTime.now(java.time.ZoneOffset.UTC).toString());
         body.put("errorCode", errorCode);
         body.put("message", message);
         return ResponseEntity.status(status).body(body);

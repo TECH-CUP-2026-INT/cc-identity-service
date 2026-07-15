@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -51,8 +52,8 @@ class AuditControllerTest {
 
     @Test
     void queryEventsReturnsMappedAuditEventsAndPassesFilters() throws Exception {
-        LocalDateTime startDate = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(2026, 1, 31, 23, 59);
+        LocalDateTime startDate = LocalDateTime.of(2026, Month.JANUARY, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2026, Month.JANUARY, 31, 23, 59);
         var event = TestFixtures.auditEvent();
         var response = TestFixtures.auditEventResponse();
         when(auditQueryUseCase.queryEvents(startDate, endDate, AuditActionType.USER_LOGIN, TestFixtures.USER_ID))

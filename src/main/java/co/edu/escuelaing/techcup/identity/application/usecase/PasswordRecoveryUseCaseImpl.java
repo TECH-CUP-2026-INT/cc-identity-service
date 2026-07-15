@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,8 +49,8 @@ public class PasswordRecoveryUseCaseImpl implements PasswordRecoveryUseCase {
                     .userId(user.getId())
                     .code(code)
                     .used(false)
-                    .createdAt(LocalDateTime.now())
-                    .expiresAt(LocalDateTime.now().plusMinutes(recoveryExpirationMinutes))
+                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(recoveryExpirationMinutes))
                     .build();
 
             recoveryTokenRepository.save(token);
@@ -60,7 +61,7 @@ public class PasswordRecoveryUseCaseImpl implements PasswordRecoveryUseCase {
                     .actionType(AuditActionType.PASSWORD_RECOVERY_REQUESTED)
                     .description("Password recovery requested")
                     .success(true)
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                     .build());
         });
     }
@@ -87,7 +88,7 @@ public class PasswordRecoveryUseCaseImpl implements PasswordRecoveryUseCase {
         recoveryTokenRepository.save(token);
 
         user.setPassword(passwordUtil.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
         userRepository.save(user);
 
         auditRepository.save(AuditEvent.builder()
@@ -95,7 +96,7 @@ public class PasswordRecoveryUseCaseImpl implements PasswordRecoveryUseCase {
                 .actionType(AuditActionType.PASSWORD_RESET)
                 .description("Password successfully reset")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 }

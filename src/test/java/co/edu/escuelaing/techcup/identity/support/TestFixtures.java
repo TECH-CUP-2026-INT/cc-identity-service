@@ -20,6 +20,7 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 public final class TestFixtures {
 
@@ -44,7 +45,7 @@ public final class TestFixtures {
                 .status(AccountStatus.ACTIVE)
                 .idType(IdType.CC)
                 .idNumber("123456789")
-                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .dateOfBirth(LocalDate.of(2000, Month.JANUARY, 1))
                 .academicProgram("Computer Science")
                 .semester(5)
                 .createdAt(LocalDateTime.now().minusDays(2))

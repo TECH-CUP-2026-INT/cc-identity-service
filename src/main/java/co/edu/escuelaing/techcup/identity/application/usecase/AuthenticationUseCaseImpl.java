@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 @Slf4j
@@ -88,8 +89,8 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .code(otpCode)
                 .failedAttempts(0)
                 .used(false)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(otpExpirationMinutes))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(otpExpirationMinutes))
                 .build();
 
         otpRepository.save(otp);
@@ -100,7 +101,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .actionType(AuditActionType.OTP_SENT)
                 .description("OTP sent for login")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 
@@ -110,7 +111,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .actionType(AuditActionType.USER_LOGIN_FAILED)
                 .description(reason)
                 .success(false)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 }

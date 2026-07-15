@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,8 +54,8 @@ class AuditEventRepositoryAdapterTest {
 
     @Test
     void findByFiltersBuildsQueryWithAllFilters() {
-        LocalDateTime start = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 1, 31, 23, 59);
+        LocalDateTime start = LocalDateTime.of(2026, Month.JANUARY, 1, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2026, Month.JANUARY, 31, 23, 59);
         AuditEventDocument document = TestFixtures.auditEventDocument();
         AuditEvent event = TestFixtures.auditEvent();
         when(mongoTemplate.find(org.mockito.ArgumentMatchers.any(Query.class), eq(AuditEventDocument.class)))
@@ -75,7 +76,7 @@ class AuditEventRepositoryAdapterTest {
 
     @Test
     void findByFiltersBuildsQueryWithOnlyStartDate() {
-        LocalDateTime start = LocalDateTime.of(2026, 1, 1, 0, 0);
+        LocalDateTime start = LocalDateTime.of(2026, Month.JANUARY, 1, 0, 0);
         when(mongoTemplate.find(org.mockito.ArgumentMatchers.any(Query.class), eq(AuditEventDocument.class)))
                 .thenReturn(List.of());
 
@@ -87,7 +88,7 @@ class AuditEventRepositoryAdapterTest {
 
     @Test
     void findByFiltersBuildsQueryWithOnlyEndDate() {
-        LocalDateTime end = LocalDateTime.of(2026, 1, 31, 23, 59);
+        LocalDateTime end = LocalDateTime.of(2026, Month.JANUARY, 31, 23, 59);
         when(mongoTemplate.find(org.mockito.ArgumentMatchers.any(Query.class), eq(AuditEventDocument.class)))
                 .thenReturn(List.of());
 

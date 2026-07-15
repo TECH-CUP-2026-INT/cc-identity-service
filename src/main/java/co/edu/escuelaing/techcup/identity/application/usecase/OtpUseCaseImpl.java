@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -88,7 +89,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
                 .actionType(AuditActionType.USER_LOGIN)
                 .description("Successful login after OTP validation")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
 
         return jwt;
@@ -104,7 +105,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
         OtpToken existingOtp = otpRepository.findLatestByUserId(userId).orElse(null);
         if (existingOtp != null) {
             long secondsSinceCreation = java.time.Duration.between(
-                    existingOtp.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                    existingOtp.getCreatedAt(), LocalDateTime.now(ZoneOffset.UTC)).getSeconds();
             if (secondsSinceCreation < resendCooldownSeconds) {
                 throw new InvalidOtpException("Please wait " +
                         (resendCooldownSeconds - secondsSinceCreation) + " seconds before requesting a new OTP");
@@ -119,8 +120,8 @@ public class OtpUseCaseImpl implements OtpUseCase {
                 .code(otpCode)
                 .failedAttempts(0)
                 .used(false)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(otpExpirationMinutes))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(otpExpirationMinutes))
                 .build();
 
         otpRepository.save(newOtp);
@@ -133,7 +134,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
                 .actionType(AuditActionType.OTP_FAILED)
                 .description(reason)
                 .success(false)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 }

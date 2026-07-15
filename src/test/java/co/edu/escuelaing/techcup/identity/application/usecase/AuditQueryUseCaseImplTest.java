@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,8 +29,8 @@ class AuditQueryUseCaseImplTest {
 
     @Test
     void queryEventsDelegatesFiltersToRepository() {
-        LocalDateTime startDate = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(2026, 1, 31, 23, 59);
+        LocalDateTime startDate = LocalDateTime.of(2026, Month.JANUARY, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2026, Month.JANUARY, 31, 23, 59);
         List<AuditEvent> expected = List.of(TestFixtures.auditEvent());
         when(auditRepository.findByFilters(startDate, endDate, AuditActionType.USER_LOGIN, "user-1"))
                 .thenReturn(expected);

@@ -19,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
 
+    private static final String TIMESTAMP_FIELD = "timestamp";
+
     private final AuditEventMongoRepository mongoRepository;
     private final MongoTemplate mongoTemplate;
     private final AuditEventMapper mapper;
@@ -36,11 +38,11 @@ public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
         Query query = new Query();
 
         if (startDate != null && endDate != null) {
-            query.addCriteria(Criteria.where("timestamp").gte(startDate).lte(endDate));
+            query.addCriteria(Criteria.where(TIMESTAMP_FIELD).gte(startDate).lte(endDate));
         } else if (startDate != null) {
-            query.addCriteria(Criteria.where("timestamp").gte(startDate));
+            query.addCriteria(Criteria.where(TIMESTAMP_FIELD).gte(startDate));
         } else if (endDate != null) {
-            query.addCriteria(Criteria.where("timestamp").lte(endDate));
+            query.addCriteria(Criteria.where(TIMESTAMP_FIELD).lte(endDate));
         }
 
         if (actionType != null) {

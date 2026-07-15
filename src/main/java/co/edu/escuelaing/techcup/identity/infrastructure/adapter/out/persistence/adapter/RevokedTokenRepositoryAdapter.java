@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,6 @@ public class RevokedTokenRepositoryAdapter implements RevokedTokenRepositoryPort
 
     @Override
     public void deleteExpiredTokens() {
-        mongoRepository.deleteAllByExpiresAtBefore(LocalDateTime.now());
+        mongoRepository.deleteAllByExpiresAtBefore(LocalDateTime.now(ZoneOffset.UTC));
     }
 }

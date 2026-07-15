@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,7 +40,7 @@ public class LogoutUseCaseImpl implements LogoutUseCase {
             Claims claims = jwtUtil.extractClaims(token);
             userId = claims.getSubject();
             expiresAt = claims.getExpiration().toInstant()
-                    .atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    .atZone(ZoneOffset.UTC).toLocalDateTime();
         } catch (Exception e) {
             // Token already expired or invalid — treat session as already closed
             log.info("Logout with expired/invalid token — session already closed");
@@ -50,7 +50,7 @@ public class LogoutUseCaseImpl implements LogoutUseCase {
         revokedTokenRepository.save(RevokedToken.builder()
                 .token(token)
                 .userId(userId)
-                .revokedAt(LocalDateTime.now())
+                .revokedAt(LocalDateTime.now(ZoneOffset.UTC))
                 .expiresAt(expiresAt)
                 .build());
 
@@ -59,7 +59,7 @@ public class LogoutUseCaseImpl implements LogoutUseCase {
                 .actionType(AuditActionType.USER_LOGOUT)
                 .description("User logged out — JWT revoked")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 }

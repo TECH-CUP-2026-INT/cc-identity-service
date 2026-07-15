@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,8 +45,8 @@ public class RegisterUserUseCaseImpl implements RegisterUserUseCase {
 
         user.setStatus(AccountStatus.ACTIVE);
         user.setPassword(passwordUtil.encode(user.getPassword()));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
+        user.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+        user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
 
         User saved = userRepository.save(user);
         auditRegistration(saved);
@@ -64,7 +65,7 @@ public class RegisterUserUseCaseImpl implements RegisterUserUseCase {
                 .actionType(AuditActionType.USER_REGISTERED)
                 .description("User registered as " + user.getUserType().name())
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 }

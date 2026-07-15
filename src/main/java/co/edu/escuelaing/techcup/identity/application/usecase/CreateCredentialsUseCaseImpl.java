@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,8 +54,8 @@ public class CreateCredentialsUseCaseImpl implements CreateCredentialsUseCase {
                 .userType(userType)
                 .role(role)
                 .status(AccountStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
 
         User saved = userRepository.save(user);
@@ -66,8 +67,8 @@ public class CreateCredentialsUseCaseImpl implements CreateCredentialsUseCase {
                 .code(otpCode)
                 .failedAttempts(0)
                 .used(false)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(otpExpirationMinutes))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(otpExpirationMinutes))
                 .build();
         otpRepository.save(otp);
         emailPort.sendOtp(saved.getEmail(), otpCode);
@@ -77,7 +78,7 @@ public class CreateCredentialsUseCaseImpl implements CreateCredentialsUseCase {
                 .actionType(AuditActionType.CREDENTIALS_CREATED)
                 .description("Credentials created for " + userType.name() + " via inter-service call")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
 
         return saved;
