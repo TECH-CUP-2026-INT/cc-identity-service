@@ -105,7 +105,8 @@ public class OtpUseCaseImpl implements OtpUseCase {
         OtpToken existingOtp = otpRepository.findLatestByUserId(userId).orElse(null);
         if (existingOtp != null) {
             long secondsSinceCreation = java.time.Duration.between(
-                    existingOtp.getCreatedAt(), LocalDateTime.now(ZoneOffset.UTC)).getSeconds();
+                    existingOtp.getCreatedAt().toInstant(ZoneOffset.UTC),
+                    LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC)).getSeconds();
             if (secondsSinceCreation < resendCooldownSeconds) {
                 throw new InvalidOtpException("Please wait " +
                         (resendCooldownSeconds - secondsSinceCreation) + " seconds before requesting a new OTP");
