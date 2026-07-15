@@ -21,6 +21,7 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.ZoneOffset;
 
 public final class TestFixtures {
 
@@ -48,8 +49,8 @@ public final class TestFixtures {
                 .dateOfBirth(LocalDate.of(2000, Month.JANUARY, 1))
                 .academicProgram("Computer Science")
                 .semester(5)
-                .createdAt(LocalDateTime.now().minusDays(2))
-                .updatedAt(LocalDateTime.now().minusDays(1))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusDays(2))
+                .updatedAt(LocalDateTime.now(ZoneOffset.UTC).minusDays(1))
                 .build();
     }
 
@@ -83,14 +84,14 @@ public final class TestFixtures {
                 .code(OTP_CODE)
                 .failedAttempts(0)
                 .used(false)
-                .createdAt(LocalDateTime.now().minusMinutes(2))
-                .expiresAt(LocalDateTime.now().plusMinutes(3))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(3))
                 .build();
     }
 
     public static OtpToken expiredOtp() {
         OtpToken token = validOtp();
-        token.setExpiresAt(LocalDateTime.now().minusSeconds(1));
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
         return token;
     }
 
@@ -100,14 +101,14 @@ public final class TestFixtures {
                 .userId(USER_ID)
                 .code("ABCD1234")
                 .used(false)
-                .createdAt(LocalDateTime.now().minusMinutes(1))
-                .expiresAt(LocalDateTime.now().plusMinutes(14))
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(14))
                 .build();
     }
 
     public static RecoveryToken expiredRecoveryToken() {
         RecoveryToken token = validRecoveryToken();
-        token.setExpiresAt(LocalDateTime.now().minusSeconds(1));
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
         return token;
     }
 
@@ -116,8 +117,8 @@ public final class TestFixtures {
                 .id("revoked-1")
                 .token(JWT)
                 .userId(USER_ID)
-                .revokedAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusHours(1))
+                .revokedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plusHours(1))
                 .build();
     }
 
@@ -128,7 +129,7 @@ public final class TestFixtures {
                 .actionType(AuditActionType.USER_LOGIN)
                 .description("Successful login")
                 .success(true)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
     }
 

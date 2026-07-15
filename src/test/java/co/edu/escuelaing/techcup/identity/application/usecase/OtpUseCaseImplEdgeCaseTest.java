@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,7 +119,7 @@ class OtpUseCaseImplEdgeCaseTest {
     @Test
     void resendOtpAllowsRequestExactlyAfterCooldownBoundary() {
         OtpToken oldOtp = TestFixtures.validOtp();
-        oldOtp.setCreatedAt(LocalDateTime.now().minusSeconds(61));
+        oldOtp.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(61));
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(TestFixtures.activeUser()));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(oldOtp));
         when(otpUtil.generateOtp()).thenReturn("000001");
@@ -135,7 +136,7 @@ class OtpUseCaseImplEdgeCaseTest {
     @Test
     void resendOtpRejectsEvenExpiredOtpWhenItWasCreatedInsideCooldownWindow() {
         OtpToken oldOtp = TestFixtures.expiredOtp();
-        oldOtp.setCreatedAt(LocalDateTime.now().minusSeconds(5));
+        oldOtp.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(5));
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(TestFixtures.activeUser()));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(oldOtp));
 
@@ -150,7 +151,7 @@ class OtpUseCaseImplEdgeCaseTest {
     @Test
     void resendOtpRejectsOtpCreatedInTheFutureAsCooldownViolation() {
         OtpToken futureOtp = TestFixtures.validOtp();
-        futureOtp.setCreatedAt(LocalDateTime.now().plusSeconds(30));
+        futureOtp.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC).plusSeconds(30));
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(TestFixtures.activeUser()));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(futureOtp));
 

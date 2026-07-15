@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -173,7 +174,7 @@ class OtpUseCaseImplTest {
     void resendOtpDeletesExistingOtpCreatesNewOneAndSendsEmailAfterCooldown() {
         User user = TestFixtures.activeUser();
         OtpToken oldOtp = TestFixtures.validOtp();
-        oldOtp.setCreatedAt(LocalDateTime.now().minusMinutes(2));
+        oldOtp.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(user));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(oldOtp));
         when(otpUtil.generateOtp()).thenReturn("654321");
@@ -206,7 +207,7 @@ class OtpUseCaseImplTest {
     @Test
     void resendOtpRejectsRequestDuringCooldown() {
         OtpToken recentOtp = TestFixtures.validOtp();
-        recentOtp.setCreatedAt(LocalDateTime.now().minusSeconds(10));
+        recentOtp.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10));
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(TestFixtures.activeUser()));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(recentOtp));
 

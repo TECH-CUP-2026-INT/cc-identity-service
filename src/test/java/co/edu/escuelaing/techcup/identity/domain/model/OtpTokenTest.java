@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.identity.support.TestFixtures;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +50,7 @@ class OtpTokenTest {
     @Test
     void tokenExpiringNowBecomesExpiredAfterTimePasses() {
         OtpToken token = TestFixtures.validOtp();
-        token.setExpiresAt(LocalDateTime.now().minusNanos(1));
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusNanos(1));
 
         assertThat(token.isExpired()).isTrue();
     }

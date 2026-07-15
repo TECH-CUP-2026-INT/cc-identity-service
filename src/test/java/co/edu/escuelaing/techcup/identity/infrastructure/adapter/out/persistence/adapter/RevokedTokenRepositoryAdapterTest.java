@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -58,6 +59,6 @@ class RevokedTokenRepositoryAdapterTest {
 
         ArgumentCaptor<LocalDateTime> cutoffCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
         verify(mongoRepository).deleteAllByExpiresAtBefore(cutoffCaptor.capture());
-        assertThat(cutoffCaptor.getValue()).isBeforeOrEqualTo(LocalDateTime.now());
+        assertThat(cutoffCaptor.getValue()).isBeforeOrEqualTo(LocalDateTime.now(ZoneOffset.UTC));
     }
 }
