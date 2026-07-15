@@ -65,6 +65,15 @@ public class JwtService {
         String email = extractEmail(token);
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
+
+    /**
+     * Extracts the expiration date from a token.
+     * @param token the JWT token
+     * @return the expiration date stored in the token
+     */
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
     /**
      * Private helpers
      * 

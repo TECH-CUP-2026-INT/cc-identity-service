@@ -8,6 +8,7 @@ import co.edu.escuelaing.techcup.identity.dto.AuditEventResponse;
 import co.edu.escuelaing.techcup.identity.service.AuditService;
 import co.edu.escuelaing.techcup.identity.service.GmailLoginService;
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,7 @@ class AuditControllerTest {
     @MockitoBean private JwtService jwtService;
     @MockitoBean private UserDetailsServiceImpl userDetailsService;
     @MockitoBean private GmailLoginService gmailLoginService;
+    @MockitoBean private TokenBlacklistService tokenBlacklistService;
 
     @Test
     @WithMockUser(roles = "ADMIN")

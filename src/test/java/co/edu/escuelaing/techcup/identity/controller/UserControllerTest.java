@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.controller;
 
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import co.edu.escuelaing.techcup.identity.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -58,6 +59,9 @@ class UserControllerTest {
 
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
+
+    @MockBean
+    private TokenBlacklistService tokenBlacklistService;
 
     /**
      * SCRUM-61: Verifica que un ADMIN puede inhabilitar un usuario exitosamente.

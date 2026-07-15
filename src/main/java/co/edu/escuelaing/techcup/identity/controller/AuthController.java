@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.identity.controller;
 import co.edu.escuelaing.techcup.identity.dto.ApiResponse;
 import co.edu.escuelaing.techcup.identity.dto.AuthResponse;
 import co.edu.escuelaing.techcup.identity.dto.LoginRequest;
+import co.edu.escuelaing.techcup.identity.dto.LogoutRequest;
 import co.edu.escuelaing.techcup.identity.dto.OtpVerifyRequest;
 import co.edu.escuelaing.techcup.identity.dto.RefreshTokenRequest;
 import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -92,5 +94,26 @@ public class AuthController {
             @Valid @RequestBody PasswordResetRequest request) {
 
         return ResponseEntity.ok(authService.resetPassword(request));
+    }
+
+    /**
+     * SCRUM-18 — logs out the current session by revoking the refresh token
+     * (and the access token, if supplied via the Authorization header).
+     */
+    @Operation(summary = "Logout")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @Valid @RequestBody LogoutRequest request) {
+
+        String accessToken = extractBearerToken(authorizationHeader);
+        return ResponseEntity.ok(authService.logout(accessToken, request.getRefreshToken()));
+    }
+
+    private String extractBearerToken(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        }
+        return null;
     }
 }

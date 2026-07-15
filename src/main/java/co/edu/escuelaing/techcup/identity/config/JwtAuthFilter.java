@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.config;
 
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,9 +26,12 @@ import java.io.IOException;
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
-    public JwtAuthFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
+    private final TokenBlacklistService tokenBlacklistService;
+    public JwtAuthFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService,
+                          TokenBlacklistService tokenBlacklistService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            if (jwtService.isTokenValid(token, userDetails)) {
+            if (jwtService.isTokenValid(token, userDetails) && !tokenBlacklistService.isRevoked(token)) {
                 UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                         userDetails,

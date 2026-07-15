@@ -3,6 +3,7 @@ package co.edu.escuelaing.techcup.identity.controller;
 import co.edu.escuelaing.techcup.identity.dto.RefereeRequestDTO;
 import co.edu.escuelaing.techcup.identity.document.IdType;
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import co.edu.escuelaing.techcup.identity.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,6 +71,9 @@ class RefereeControllerTest {
 
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
+
+    @MockBean
+    private TokenBlacklistService tokenBlacklistService;
 
     /**
      * SCRUM-11: Verifica que un ORGANIZER puede crear un arbitro exitosamente.

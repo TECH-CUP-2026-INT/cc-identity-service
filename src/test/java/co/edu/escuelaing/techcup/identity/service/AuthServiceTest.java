@@ -1,5 +1,7 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
 import co.edu.escuelaing.techcup.identity.document.IdType;
 import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.document.UserDocument.UserType;
@@ -53,6 +55,12 @@ class AuthServiceTest {
 
     @Mock
     private UserDetailsServiceImpl userDetailsService;
+
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private AuthService authService;
@@ -175,6 +183,17 @@ class AuthServiceTest {
         when(jwtService.isTokenValid("invalid-token", userDetails)).thenReturn(false);
 
         assertThrows(RuntimeException.class, () -> authService.refreshToken(request));
+    }
+
+    @Test
+    void refreshToken_revokedToken_throwsException() {
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("revoked-refresh-token");
+
+        when(tokenBlacklistService.isRevoked("revoked-refresh-token")).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> authService.refreshToken(request));
+        verify(jwtService, never()).extractEmail(anyString());
     }
 
     @Test
@@ -308,6 +327,49 @@ class AuthServiceTest {
 
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(UserDocument.class));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SCRUM-18 — Logout
+    // ══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void logout_withAccessAndRefreshToken_revokesBoth() {
+        when(jwtService.extractEmail("valid-refresh-token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        ApiResponse response = authService.logout("valid-access-token", "valid-refresh-token");
+
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        verify(tokenBlacklistService).revoke("valid-refresh-token");
+        verify(tokenBlacklistService).revoke("valid-access-token");
+        verify(auditService).record(eq(AuditEventType.LOGOUT_SUCCESS), eq(AuditResult.SUCCESS),
+                eq(user.getId()), eq("test@example.com"), anyString(), isNull());
+    }
+
+    @Test
+    void logout_withoutAccessToken_revokesOnlyRefreshToken() {
+        when(jwtService.extractEmail("valid-refresh-token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        ApiResponse response = authService.logout(null, "valid-refresh-token");
+
+        assertTrue(response.isSuccess());
+        verify(tokenBlacklistService).revoke("valid-refresh-token");
+        verify(tokenBlacklistService, times(1)).revoke(anyString());
+    }
+
+    @Test
+    void logout_invalidRefreshToken_throwsExceptionAndRecordsFailure() {
+        when(jwtService.extractEmail("garbage-token"))
+                .thenThrow(new io.jsonwebtoken.MalformedJwtException("Malformed token"));
+
+        assertThrows(BusinessException.class, () -> authService.logout(null, "garbage-token"));
+
+        verify(tokenBlacklistService, never()).revoke(anyString());
+        verify(auditService).record(eq(AuditEventType.LOGOUT_FAILED), eq(AuditResult.FAILURE),
+                isNull(), isNull(), anyString(), isNull());
     }
 
     // ══════════════════════════════════════════════════════════════════════

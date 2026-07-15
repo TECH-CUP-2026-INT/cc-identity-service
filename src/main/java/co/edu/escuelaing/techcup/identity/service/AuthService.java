@@ -1,10 +1,14 @@
 package co.edu.escuelaing.techcup.identity.service;
 
+import co.edu.escuelaing.techcup.identity.document.AuditEventType;
+import co.edu.escuelaing.techcup.identity.document.AuditResult;
 import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.document.UserDocument.UserType;
 import co.edu.escuelaing.techcup.identity.dto.*;
 import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,14 +38,21 @@ public class AuthService {
     private final OtpService otpService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsServiceImpl userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final AuditService auditService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, OtpService otpService, AuthenticationManager authenticationManager, UserDetailsServiceImpl userDetailsService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
+                        OtpService otpService, AuthenticationManager authenticationManager,
+                        UserDetailsServiceImpl userDetailsService, TokenBlacklistService tokenBlacklistService,
+                        AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.otpService = otpService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklistService = tokenBlacklistService;
+        this.auditService = auditService;
     }
 
     /**
@@ -199,6 +210,10 @@ public class AuthService {
      * Validates a refresh token and issues a new access token (SCRUM-15).
      */
     public AuthResponse refreshToken(RefreshTokenRequest request) {
+        if (tokenBlacklistService.isRevoked(request.getRefreshToken())) {
+            throw new BusinessException("Refresh token has been revoked");
+        }
+
         String email = jwtService.extractEmail(request.getRefreshToken());
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -249,5 +264,47 @@ public class AuthService {
         userRepository.save(user);
 
         return new ApiResponse("Password updated successfully.", true);
+    }
+
+    /**
+     * Logs out the current session by revoking the refresh token — and the
+     * access token, if supplied — so neither can be used again even before
+     * their natural expiry (SCRUM-18).
+     *
+     * @param accessToken  the bearer access token from the Authorization header, or null if absent
+     * @param refreshToken the refresh token to invalidate
+     */
+    @Transactional
+    public ApiResponse logout(String accessToken, String refreshToken) {
+        String email;
+        try {
+            email = jwtService.extractEmail(refreshToken);
+        } catch (ExpiredJwtException ex) {
+            email = ex.getClaims().getSubject();
+        } catch (JwtException | IllegalArgumentException ex) {
+            auditService.record(AuditEventType.LOGOUT_FAILED, AuditResult.FAILURE,
+                    null, null, "Logout failed — invalid refresh token", null);
+            throw new BusinessException("Invalid refresh token");
+        }
+
+        tokenBlacklistService.revoke(refreshToken);
+
+        if (accessToken != null && !accessToken.isBlank()) {
+            try {
+                tokenBlacklistService.revoke(accessToken);
+            } catch (JwtException | IllegalArgumentException ignored) {
+                // A malformed/garbage access token doesn't block logout —
+                // the refresh token is the one that matters.
+            }
+        }
+
+        UUID userId = userRepository.findByEmail(email)
+                .map(UserDocument::getId)
+                .orElse(null);
+
+        auditService.record(AuditEventType.LOGOUT_SUCCESS, AuditResult.SUCCESS,
+                userId, email, "User logged out", null);
+
+        return new ApiResponse("Logged out successfully.", true);
     }
 }

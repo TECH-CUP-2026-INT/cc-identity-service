@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.controller;
 
+import co.edu.escuelaing.techcup.identity.dto.ApiResponse;
 import co.edu.escuelaing.techcup.identity.dto.AuthResponse;
 import co.edu.escuelaing.techcup.identity.dto.LoginRequest;
+import co.edu.escuelaing.techcup.identity.dto.LogoutRequest;
 import co.edu.escuelaing.techcup.identity.dto.OtpVerifyRequest;
 import co.edu.escuelaing.techcup.identity.dto.RefreshTokenRequest;
 import co.edu.escuelaing.techcup.identity.dto.RegisterRequest;
@@ -9,6 +11,7 @@ import co.edu.escuelaing.techcup.identity.document.IdType;
 import co.edu.escuelaing.techcup.identity.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.service.AuthService;
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -68,6 +74,9 @@ class AuthControllerTest {
 
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
+
+    @MockBean
+    private TokenBlacklistService tokenBlacklistService;
 
     /**
      * SCRUM-13: Verifica que el registro de usuario retorna 200 con mensaje de exito.
@@ -141,5 +150,48 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"));
+    }
+
+    /**
+     * SCRUM-18: Verifica que el logout con Authorization header y refresh token
+     * en el body retorna 200 y reenvia ambos tokens al servicio.
+     */
+    @Test
+    void logout_withAccessAndRefreshToken_success() throws Exception {
+        LogoutRequest request = new LogoutRequest();
+        request.setRefreshToken("valid-refresh-token");
+
+        when(authService.logout("valid-access-token", "valid-refresh-token"))
+                .thenReturn(new ApiResponse("Logged out successfully.", true));
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer valid-access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(authService).logout("valid-access-token", "valid-refresh-token");
+    }
+
+    /**
+     * SCRUM-18: Verifica que el logout sin Authorization header sigue funcionando,
+     * pasando null como access token al servicio.
+     */
+    @Test
+    void logout_withoutAuthorizationHeader_passesNullAccessToken() throws Exception {
+        LogoutRequest request = new LogoutRequest();
+        request.setRefreshToken("valid-refresh-token");
+
+        when(authService.logout(isNull(), eq("valid-refresh-token")))
+                .thenReturn(new ApiResponse("Logged out successfully.", true));
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(authService).logout(isNull(), eq("valid-refresh-token"));
     }
 }

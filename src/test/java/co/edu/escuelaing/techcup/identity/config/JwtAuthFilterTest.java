@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.config;
 
 import co.edu.escuelaing.techcup.identity.service.JwtService;
+import co.edu.escuelaing.techcup.identity.service.TokenBlacklistService;
 import co.edu.escuelaing.techcup.identity.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,13 +29,15 @@ class JwtAuthFilterTest {
 
     private JwtService jwtService;
     private UserDetailsServiceImpl userDetailsService;
+    private TokenBlacklistService tokenBlacklistService;
     private JwtAuthFilter jwtAuthFilter;
 
     @BeforeEach
     void setUp() {
         jwtService = mock(JwtService.class);
         userDetailsService = mock(UserDetailsServiceImpl.class);
-        jwtAuthFilter = new JwtAuthFilter(jwtService, userDetailsService);
+        tokenBlacklistService = mock(TokenBlacklistService.class);
+        jwtAuthFilter = new JwtAuthFilter(jwtService, userDetailsService, tokenBlacklistService);
         SecurityContextHolder.clearContext();
     }
 
@@ -109,6 +112,31 @@ class JwtAuthFilterTest {
         when(jwtService.extractEmail("invalid-token")).thenReturn("user@test.com");
         when(userDetailsService.loadUserByUsername("user@test.com")).thenReturn(userDetails);
         when(jwtService.isTokenValid("invalid-token", userDetails)).thenReturn(false);
+
+        jwtAuthFilter.doFilterInternal(request, response, chain);
+
+        verify(chain).doFilter(request, response);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    /**
+     * SCRUM-18: Verifica que un token revocado (logout) no autentica al usuario
+     * aunque su firma y expiracion sigan siendo validas.
+     */
+    @Test
+    void doFilterInternal_revokedToken_doesNotSetAuthentication() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer revoked-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        UserDetails userDetails = new User("user@test.com", "password",
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        when(jwtService.extractEmail("revoked-token")).thenReturn("user@test.com");
+        when(userDetailsService.loadUserByUsername("user@test.com")).thenReturn(userDetails);
+        when(jwtService.isTokenValid("revoked-token", userDetails)).thenReturn(true);
+        when(tokenBlacklistService.isRevoked("revoked-token")).thenReturn(true);
 
         jwtAuthFilter.doFilterInternal(request, response, chain);
 
