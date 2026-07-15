@@ -56,7 +56,7 @@ class OtpServiceTest {
                 .firstName("John")
                 .lastName("Doe")
                 .enabled(true)
-                .role(UserDocument.Role.USER)
+                .role(UserDocument.Role.PLAYER)
                 .build();
     }
 

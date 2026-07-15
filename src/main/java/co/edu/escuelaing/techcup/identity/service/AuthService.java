@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.service;
 
 import co.edu.escuelaing.techcup.identity.document.UserDocument;
+import co.edu.escuelaing.techcup.identity.document.UserDocument.UserType;
 import co.edu.escuelaing.techcup.identity.dto.*;
+import co.edu.escuelaing.techcup.identity.exception.BusinessException;
 import co.edu.escuelaing.techcup.identity.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,14 +12,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * Main service orchestrating authentication and identity flows.
- * Handles user registration, OTP verification, login, and token refresh.
+ * Registration flows: TC-01 (Student), TC-02 (Guest), TC-03 (Graduate).
+ * Also handles OTP verification, login, token refresh and password recovery.
  * Covers SCRUM-13, SCRUM-14, SCRUM-15, SCRUM-16 and SCRUM-17.
  */
-
 @Service
-public class AuthService { 
+public class AuthService {
+
+    private static final String INSTITUTIONAL_DOMAIN       = "@mail.escuelaing.edu.co";
+    private static final String INSTITUTIONAL_SECONDDOMAIN = "@escuelaing.edu.co";
+    private static final String GMAIL_DOMAIN               = "@gmail.com";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -26,7 +36,6 @@ public class AuthService {
     private final UserDetailsServiceImpl userDetailsService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, OtpService otpService, AuthenticationManager authenticationManager, UserDetailsServiceImpl userDetailsService) {
-
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -36,26 +45,23 @@ public class AuthService {
     }
 
     /**
-     * Registers a new user and sends an OTP to their email.
+     * Registers a new user according to their userType (TC-01/02/03) and sends an OTP.
      * Account starts disabled until OTP is verified (SCRUM-13).
-     * @param request registration data
-     * @return confirmation message
-     * 
      */
     @Transactional
     public ApiResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new BusinessException("Email already registered.");
+        }
+        if (userRepository.existsByIdNumber(request.getIdNumber())) {
+            throw new BusinessException("ID number already registered.");
         }
 
-        UserDocument user = UserDocument.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .enabled(false)
-                .role(UserDocument.Role.USER)
-                .build();
+        UserDocument user = switch (request.getUserType()) {
+            case STUDENT  -> registerStudent(request);
+            case GUEST    -> registerGuest(request);
+            case GRADUATE -> registerGraduate(request);
+        };
 
         userRepository.save(user);
         otpService.generateAndSend(user);
@@ -63,10 +69,100 @@ public class AuthService {
         return new ApiResponse("Registration successful. Please check your email for the OTP code.", true);
     }
 
+    private UserDocument registerStudent(RegisterRequest req) {
+        if (!req.getEmail().endsWith(INSTITUTIONAL_DOMAIN)) {
+            throw new BusinessException(
+                    "Students must register with an institutional email (@mail.escuelaing.edu.co).");
+        }
+        if (req.getAcademicProgram() == null || req.getAcademicProgram().isBlank()) {
+            throw new BusinessException("Academic program is required for student registration.");
+        }
+        if (req.getSemester() == null) {
+            throw new BusinessException("Semester is required for student registration.");
+        }
+        return UserDocument.builder()
+                .email(req.getEmail())
+                .password(passwordEncoder.encode(req.getPassword()))
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
+                .userType(UserType.STUDENT)
+                .role(UserDocument.Role.PLAYER)
+                .idType(req.getIdType())
+                .idNumber(req.getIdNumber())
+                .dateOfBirth(req.getDateOfBirth())
+                .academicProgram(req.getAcademicProgram())
+                .semester(req.getSemester())
+                .enabled(false)
+                .build();
+    }
+
+    private UserDocument registerGuest(RegisterRequest req) {
+        if (!req.getEmail().endsWith(GMAIL_DOMAIN)) {
+            throw new BusinessException(
+                    "Guests (family/friends) must register with a Gmail address (@gmail.com).");
+        }
+        if (req.getAssociatedStudentId() == null) {
+            throw new BusinessException("Guests must declare the associated student ID.");
+        }
+        if (req.getRelationship() == null || req.getRelationship().isBlank()) {
+            throw new BusinessException("Relationship to the associated student is required.");
+        }
+        String studentId = req.getAssociatedStudentId();
+        findStudentById(studentId)
+                .orElseThrow(() -> new BusinessException(
+                        "The associated student was not found on the platform."));
+        return UserDocument.builder()
+                .email(req.getEmail())
+                .password(passwordEncoder.encode(req.getPassword()))
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
+                .userType(UserType.GUEST)
+                .role(UserDocument.Role.PLAYER)
+                .idType(req.getIdType())
+                .idNumber(req.getIdNumber())
+                .dateOfBirth(req.getDateOfBirth())
+                .associatedStudentId(studentId)
+                .relationship(req.getRelationship())
+                .enabled(false)
+                .build();
+    }
+
+    private Optional<UserDocument> findStudentById(String studentId) {
+        try {
+            return userRepository.findByIdAndUserType(UUID.fromString(studentId), UserType.STUDENT);
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private UserDocument registerGraduate(RegisterRequest req) {
+        boolean hasInstitutional = req.getEmail().endsWith(INSTITUTIONAL_SECONDDOMAIN)
+                || req.getEmail().endsWith(INSTITUTIONAL_DOMAIN);
+        boolean hasGmail = req.getEmail().endsWith(GMAIL_DOMAIN);
+        if (!hasInstitutional && !hasGmail) {
+            throw new BusinessException(
+                    "Graduates must register with an institutional email or a Gmail address.");
+        }
+        if (req.getAcademicProgram() == null || req.getAcademicProgram().isBlank()) {
+            throw new BusinessException("Academic program is required for graduate registration.");
+        }
+        return UserDocument.builder()
+                .email(req.getEmail())
+                .password(passwordEncoder.encode(req.getPassword()))
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
+                .userType(UserType.GRADUATE)
+                .role(UserDocument.Role.PLAYER)
+                .idType(req.getIdType())
+                .idNumber(req.getIdNumber())
+                .dateOfBirth(req.getDateOfBirth())
+                .academicProgram(req.getAcademicProgram())
+                .enabled(false)
+                .build();
+    }
+
     /**
      * Verifies the OTP code and enables the user account (SCRUM-13).
-     * @param request email and OTP code
-     * @return confirmation message
      */
     @Transactional
     public ApiResponse verifyOtp(OtpVerifyRequest request) {
@@ -83,8 +179,6 @@ public class AuthService {
 
     /**
      * Authenticates a user and returns JWT access and refresh tokens (SCRUM-14).
-     * @param request login credentials
-     * @return access token, refresh token, email and role
      */
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
@@ -103,8 +197,6 @@ public class AuthService {
 
     /**
      * Validates a refresh token and issues a new access token (SCRUM-15).
-     * @param request refresh token
-     * @return new access token
      */
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String email = jwtService.extractEmail(request.getRefreshToken());

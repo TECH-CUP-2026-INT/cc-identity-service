@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Represents a registered user stored in the MongoDB users collection.
- * Each user has a unique email, encrypted password, role and account status.
+ * Each user has a unique email, encrypted password, role, userType and account status.
  */
 @Document(collection = "users")
 public class UserDocument {
@@ -31,7 +31,9 @@ public class UserDocument {
 
     private boolean enabled = false;
 
-    private Role role = Role.USER;
+    private Role role = Role.PLAYER;
+
+    private UserType userType;
 
     private IdType idType;
 
@@ -40,6 +42,14 @@ public class UserDocument {
 
     private LocalDate dateOfBirth;
 
+    private String academicProgram;
+
+    private Integer semester;
+
+    private String associatedStudentId;
+
+    private String relationship;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -47,10 +57,17 @@ public class UserDocument {
     private LocalDateTime updatedAt;
 
     public enum Role {
-        USER,
+        PLAYER,
+        CAPTAIN,
+        ORGANIZER,
         ADMIN,
-        REFEREE,
-        ORGANIZER
+        REFEREE
+    }
+
+    public enum UserType {
+        STUDENT,
+        GUEST,
+        GRADUATE
     }
 
     public UserDocument() {
@@ -64,9 +81,14 @@ public class UserDocument {
         this.lastName = builder.lastName;
         this.enabled = builder.enabled;
         this.role = builder.role;
+        this.userType = builder.userType;
         this.idType = builder.idType;
         this.idNumber = builder.idNumber;
         this.dateOfBirth = builder.dateOfBirth;
+        this.academicProgram = builder.academicProgram;
+        this.semester = builder.semester;
+        this.associatedStudentId = builder.associatedStudentId;
+        this.relationship = builder.relationship;
     }
 
     public static Builder builder() {
@@ -81,10 +103,15 @@ public class UserDocument {
         private String firstName;
         private String lastName;
         private boolean enabled = false;
-        private Role role = Role.USER;
+        private Role role = Role.PLAYER;
+        private UserType userType;
         private IdType idType;
         private String idNumber;
         private LocalDate dateOfBirth;
+        private String academicProgram;
+        private Integer semester;
+        private String associatedStudentId;
+        private String relationship;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -121,6 +148,11 @@ public class UserDocument {
             return this;
         }
 
+        public Builder userType(UserType userType) {
+            this.userType = userType;
+            return this;
+        }
+
         public Builder idType(IdType idType) {
             this.idType = idType;
             return this;
@@ -133,6 +165,26 @@ public class UserDocument {
 
         public Builder dateOfBirth(LocalDate dateOfBirth) {
             this.dateOfBirth = dateOfBirth;
+            return this;
+        }
+
+        public Builder academicProgram(String academicProgram) {
+            this.academicProgram = academicProgram;
+            return this;
+        }
+
+        public Builder semester(Integer semester) {
+            this.semester = semester;
+            return this;
+        }
+
+        public Builder associatedStudentId(String associatedStudentId) {
+            this.associatedStudentId = associatedStudentId;
+            return this;
+        }
+
+        public Builder relationship(String relationship) {
+            this.relationship = relationship;
             return this;
         }
 
@@ -169,6 +221,10 @@ public class UserDocument {
         return role;
     }
 
+    public UserType getUserType() {
+        return userType;
+    }
+
     public IdType getIdType() {
         return idType;
     }
@@ -179,6 +235,22 @@ public class UserDocument {
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
+    }
+
+    public String getAcademicProgram() {
+        return academicProgram;
+    }
+
+    public Integer getSemester() {
+        return semester;
+    }
+
+    public String getAssociatedStudentId() {
+        return associatedStudentId;
+    }
+
+    public String getRelationship() {
+        return relationship;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -217,6 +289,10 @@ public class UserDocument {
         this.role = role;
     }
 
+    public void setUserType(UserType userType) {
+        this.userType = userType;
+    }
+
     public void setIdType(IdType idType) {
         this.idType = idType;
     }
@@ -227,5 +303,21 @@ public class UserDocument {
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public void setAcademicProgram(String academicProgram) {
+        this.academicProgram = academicProgram;
+    }
+
+    public void setSemester(Integer semester) {
+        this.semester = semester;
+    }
+
+    public void setAssociatedStudentId(String associatedStudentId) {
+        this.associatedStudentId = associatedStudentId;
+    }
+
+    public void setRelationship(String relationship) {
+        this.relationship = relationship;
     }
 }

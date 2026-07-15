@@ -11,6 +11,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,5 +107,89 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
         verify(emailService, never()).sendRefereeCredentials(anyString(), anyString());
         verify(otpService, never()).generateAndSend(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que un usuario activo puede ser inhabilitado correctamente.
+     */
+    @Test
+    void disableUser_success() {
+        UUID userId = UUID.randomUUID();
+        UserDocument user = UserDocument.builder()
+                .id(userId)
+                .email("player@test.com")
+                .role(UserDocument.Role.PLAYER)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        userService.disableUser(userId);
+
+        assertFalse(user.isEnabled());
+        verify(userRepository).save(user);
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que se lanza excepcion si el usuario no existe.
+     */
+    @Test
+    void disableUser_userNotFound_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("User not found", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que no se puede inhabilitar una cuenta con rol ADMIN.
+     */
+    @Test
+    void disableUser_adminAccount_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserDocument admin = UserDocument.builder()
+                .id(userId)
+                .email("admin@test.com")
+                .role(UserDocument.Role.ADMIN)
+                .enabled(true)
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(admin));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("Admin accounts cannot be disabled", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    /**
+     * SCRUM-61: Inhabilitar usuario.
+     * Verifica que no se puede inhabilitar un usuario que ya esta deshabilitado.
+     */
+    @Test
+    void disableUser_alreadyDisabled_throwsBusinessException() {
+        UUID userId = UUID.randomUUID();
+        UserDocument user = UserDocument.builder()
+                .id(userId)
+                .email("player@test.com")
+                .role(UserDocument.Role.PLAYER)
+                .enabled(false)
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> userService.disableUser(userId));
+
+        assertEquals("User is already disabled", ex.getMessage());
+        verify(userRepository, never()).save(any());
     }
 }

@@ -19,7 +19,7 @@ import java.util.Set;
 public class GmailLoginService {
 
     private static final Set<UserDocument.Role> ALLOWED_ROLES =
-            Set.of(UserDocument.Role.USER, UserDocument.Role.REFEREE,
+            Set.of(UserDocument.Role.PLAYER, UserDocument.Role.CAPTAIN, UserDocument.Role.REFEREE,
                    UserDocument.Role.ORGANIZER, UserDocument.Role.ADMIN);
 
     private final UserRepository userRepository;

@@ -7,6 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * SCRUM-22: Controlador para registro de arbitros.
+ * Solo accesible para usuarios con rol ORGANIZER.
+ */
 @RestController
 @RequestMapping("/api/v1/referees")
 public class RefereeController {
@@ -17,6 +21,10 @@ public class RefereeController {
         this.userService = userService;
     }
 
+    /**
+     * SCRUM-22: Crea un nuevo arbitro en el sistema.
+     * Genera contrasena temporal y envia credenciales por email.
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ORGANIZER')")

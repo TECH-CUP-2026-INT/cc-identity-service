@@ -1,5 +1,5 @@
 # CI Pipeline — identity-service
-# Runs on every push and pull request to develop, main and feat/vera.
+# Runs on every push and pull request to develop, main and feature branches.
 # Uses the test Spring profile with Flapdoodle embedded MongoDB.
 # No external database is needed in CI.
 
@@ -11,12 +11,14 @@ on:
       - develop
       - main
       - feat/vera
+      - feat/ruiz
 
   pull_request:
     branches:
       - develop
       - main
       - feat/vera
+      - feat/ruiz
 
 jobs:
   build-and-test:
