@@ -1,5 +1,6 @@
 package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.controller;
 
+import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.AuthenticationUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.LogoutUseCase;
@@ -18,6 +19,11 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.res
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.TokenValidationResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +36,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Authentication", description = "Authentication, OTP, password recovery, token validation and logout (TC-06 to TC-11, TC-29)")
+@Tag(name = "Authentication", description = "Endpoints de autenticación, verificación OTP, recuperación de contraseña, validación de token JWT y cierre de sesión. " +
+        "Cubre los requisitos funcionales TC-06 (login institucional), TC-07 (login Google OAuth 2.0), TC-08 (validación JWT), " +
+        "TC-09 (recuperación de contraseña con código de un solo uso), TC-10 (verificación OTP obligatoria en cada login), " +
+        "TC-11 (expiración configurable de JWT) y TC-29 (logout con revocación de token).")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -42,7 +51,19 @@ public class AuthController {
     private final UserMapper userMapper;
 
     @PostMapping("/auth/login")
-    @Operation(summary = "TC-06: Login with institutional email and password")
+    @Operation(
+            summary = "TC-06: Iniciar sesión con correo institucional y contraseña",
+            description = "Autentica al usuario con su correo institucional (@escuelaing.edu.co) y contraseña. " +
+                    "Si las credenciales son válidas, envía un código OTP al correo del usuario. " +
+                    "El login NO está completo hasta que el OTP sea verificado mediante POST /otp/validate. " +
+                    "Registra evento de auditoría USER_LOGIN. La cuenta se bloquea tras múltiples intentos fallidos."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credenciales válidas. OTP enviado al correo del usuario."),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos (email vacío, formato incorrecto, JSON malformado)."),
+            @ApiResponse(responseCode = "401", description = "Credenciales incorrectas (email o contraseña no coinciden)."),
+            @ApiResponse(responseCode = "403", description = "Cuenta inactiva o bloqueada por múltiples intentos fallidos.")
+    })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         String userId = authenticationUseCase.loginWithInstitutionalEmail(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(LoginResponse.builder()
@@ -52,7 +73,18 @@ public class AuthController {
     }
 
     @PostMapping("/auth/login/google")
-    @Operation(summary = "TC-07: Login with Google OAuth 2.0")
+    @Operation(
+            summary = "TC-07: Iniciar sesión con Google OAuth 2.0",
+            description = "Autentica al usuario mediante un token de Google OAuth 2.0 (obtenido con el flujo de consentimiento de Google). " +
+                    "El correo asociado a la cuenta de Google debe pertenecer al dominio institucional @escuelaing.edu.co. " +
+                    "Si el usuario no existe en el sistema, se crea automáticamente. Tras autenticación exitosa, se envía un OTP al correo. " +
+                    "Registra evento de auditoría GOOGLE_LOGIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token de Google válido. OTP enviado al correo del usuario."),
+            @ApiResponse(responseCode = "400", description = "Token de Google vacío o inválido, o dominio de correo no institucional."),
+            @ApiResponse(responseCode = "403", description = "Cuenta bloqueada o inactiva.")
+    })
     public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
         String userId = authenticationUseCase.loginWithGmail(request.getGoogleToken());
         return ResponseEntity.ok(LoginResponse.builder()
@@ -62,7 +94,17 @@ public class AuthController {
     }
 
     @PostMapping("/otp/validate")
-    @Operation(summary = "TC-10: Validate OTP and obtain JWT token")
+    @Operation(
+            summary = "TC-10: Verificar código OTP y obtener token JWT",
+            description = "Valida el código OTP de 6 dígitos enviado al correo del usuario durante el login. " +
+                    "Si el OTP es correcto y no ha expirado (configurable, por defecto 5 minutos), genera y retorna un token JWT " +
+                    "junto con los datos del usuario autenticado. El OTP tiene un máximo de intentos permitidos (por defecto 3); " +
+                    "si se exceden, el usuario debe solicitar un nuevo OTP. Este es el paso final del flujo de autenticación de dos factores."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OTP válido. Retorna JWT y datos del usuario autenticado."),
+            @ApiResponse(responseCode = "400", description = "OTP incorrecto, expirado, o máximo de intentos alcanzado.")
+    })
     public ResponseEntity<OtpResponse> validateOtp(@Valid @RequestBody OtpValidationRequest request) {
         String jwt = otpUseCase.validateOtp(request.getUserId(), request.getOtpCode());
         User user = tokenValidationUseCase.validateToken(jwt);
@@ -73,7 +115,17 @@ public class AuthController {
     }
 
     @PostMapping("/otp/resend")
-    @Operation(summary = "TC-10: Resend OTP code")
+    @Operation(
+            summary = "TC-10: Reenviar código OTP",
+            description = "Genera y envía un nuevo código OTP al correo del usuario, invalidando cualquier OTP anterior. " +
+                    "Tiene un cooldown configurable (por defecto 60 segundos) entre reenvíos para prevenir abuso. " +
+                    "El nuevo OTP tiene la misma duración de expiración que el original."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Nuevo OTP enviado exitosamente."),
+            @ApiResponse(responseCode = "400", description = "Cooldown activo o userId inválido."),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+    })
     public ResponseEntity<MessageResponse> resendOtp(@Valid @RequestBody OtpResendRequest request) {
         otpUseCase.resendOtp(request.getUserId());
         return ResponseEntity.ok(MessageResponse.builder()
@@ -82,7 +134,17 @@ public class AuthController {
     }
 
     @PostMapping("/password/recovery")
-    @Operation(summary = "TC-09: Request password recovery code")
+    @Operation(
+            summary = "TC-09: Solicitar código de recuperación de contraseña",
+            description = "Envía un código de recuperación de un solo uso al correo institucional proporcionado. " +
+                    "El código tiene un tiempo de expiración configurable (por defecto 15 minutos). " +
+                    "Por seguridad, la respuesta siempre es 200 OK independientemente de si el correo existe en el sistema. " +
+                    "Registra evento de auditoría PASSWORD_RECOVERY_REQUEST."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Si el correo existe, se envió el código de recuperación. Respuesta genérica por seguridad."),
+            @ApiResponse(responseCode = "400", description = "Email vacío o con formato inválido.")
+    })
     public ResponseEntity<MessageResponse> requestRecovery(@Valid @RequestBody PasswordRecoveryRequest request) {
         passwordRecoveryUseCase.requestRecovery(request.getEmail());
         return ResponseEntity.ok(MessageResponse.builder()
@@ -91,7 +153,18 @@ public class AuthController {
     }
 
     @PostMapping("/password/reset")
-    @Operation(summary = "TC-09: Reset password with recovery code")
+    @Operation(
+            summary = "TC-09: Restablecer contraseña con código de recuperación",
+            description = "Restablece la contraseña del usuario utilizando el código de recuperación recibido por correo. " +
+                    "El código es de un solo uso y tiene tiempo de expiración (por defecto 15 minutos). " +
+                    "La nueva contraseña se almacena con hash BCrypt. " +
+                    "Registra evento de auditoría PASSWORD_RESET."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Contraseña restablecida exitosamente."),
+            @ApiResponse(responseCode = "400", description = "Código de recuperación inválido, expirado, o datos de entrada incompletos."),
+            @ApiResponse(responseCode = "410", description = "Código de recuperación expirado (Gone).")
+    })
     public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         passwordRecoveryUseCase.resetPassword(request.getEmail(), request.getRecoveryCode(), request.getNewPassword());
         return ResponseEntity.ok(MessageResponse.builder()
@@ -100,10 +173,22 @@ public class AuthController {
     }
 
     @PostMapping("/token/validate")
-    @Operation(summary = "TC-08: Validate JWT token (also enforces TC-11 expiration)")
+    @Operation(
+            summary = "TC-08: Validar token JWT",
+            description = "Valida un token JWT enviado en el header Authorization (formato: 'Bearer <token>'). " +
+                    "Verifica la firma, expiración (TC-11), y que el token no haya sido revocado (TC-29). " +
+                    "Si es válido, retorna los datos del usuario: id, email y rol. " +
+                    "Este endpoint es consumido por otros microservicios para verificar la autenticación del usuario."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token válido. Retorna datos del usuario autenticado."),
+            @ApiResponse(responseCode = "400", description = "Header Authorization ausente."),
+            @ApiResponse(responseCode = "401", description = "Token inválido, expirado, revocado, o header sin prefijo 'Bearer'.")
+    })
     public ResponseEntity<TokenValidationResponse> validateToken(
+            @Parameter(description = "Header de autorización con formato 'Bearer <JWT>'", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
             @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+        String token = extractBearerToken(authHeader);
         User user = tokenValidationUseCase.validateToken(token);
         return ResponseEntity.ok(TokenValidationResponse.builder()
                 .valid(true)
@@ -114,12 +199,34 @@ public class AuthController {
     }
 
     @PostMapping("/auth/logout")
-    @Operation(summary = "TC-29: Logout and revoke JWT token")
-    public ResponseEntity<MessageResponse> logout(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+    @Operation(
+            summary = "TC-29: Cerrar sesión y revocar token JWT",
+            description = "Cierra la sesión del usuario revocando su token JWT. El token se agrega a una lista de revocación en MongoDB " +
+                    "con un índice TTL que lo elimina automáticamente al expirar. Cualquier intento de usar un token revocado " +
+                    "será rechazado por el filtro de seguridad JWT. Registra evento de auditoría USER_LOGOUT."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sesión cerrada y token revocado exitosamente."),
+            @ApiResponse(responseCode = "401", description = "Header Authorization sin prefijo 'Bearer', token vacío, o token inválido.")
+    })
+    public ResponseEntity<MessageResponse> logout(
+            @Parameter(description = "Header de autorización con formato 'Bearer <JWT>'", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
+            @RequestHeader("Authorization") String authHeader) {
+        String token = extractBearerToken(authHeader);
         logoutUseCase.logout(token);
         return ResponseEntity.ok(MessageResponse.builder()
                 .message("Session closed successfully")
                 .build());
+    }
+
+    private String extractBearerToken(String authHeader) {
+        if (!authHeader.startsWith("Bearer ")) {
+            throw new InvalidTokenException("Authorization header must start with Bearer");
+        }
+        String token = authHeader.substring(7).trim();
+        if (token.isBlank()) {
+            throw new InvalidTokenException("Bearer token must not be blank");
+        }
+        return token;
     }
 }

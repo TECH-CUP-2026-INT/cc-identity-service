@@ -6,6 +6,8 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.req
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/internal/credentials")
-@Tag(name = "Internal", description = "Inter-service credential management")
+@Tag(name = "Internal", description = "Endpoints internos para comunicación entre microservicios. " +
+        "Consumido por users-players-service durante el registro de estudiantes (TC-01), invitados (TC-02) y egresados (TC-03). " +
+        "Estos endpoints NO deben exponerse al cliente final; están protegidos a nivel de red interna.")
 @RequiredArgsConstructor
 public class InternalCredentialController {
 
@@ -30,7 +34,19 @@ public class InternalCredentialController {
     private final UserMapper userMapper;
 
     @PostMapping
-    @Operation(summary = "Create credentials for a user registered in users-players-service")
+    @Operation(
+            summary = "Crear credenciales para usuario registrado en users-players-service",
+            description = "Crea las credenciales de autenticación (email + contraseña con hash BCrypt) para un usuario que fue " +
+                    "registrado previamente en el users-players-service. Recibe email, contraseña en texto plano, nombre completo, " +
+                    "tipo de usuario (STUDENT, GUEST, GRADUATE) y rol (PLAYER, VIEWER). " +
+                    "La cuenta se crea en estado ACTIVE. Si el email ya existe, retorna 409 Conflict. " +
+                    "Registra evento de auditoría USER_REGISTERED."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Credenciales creadas exitosamente. Retorna datos del usuario."),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos: email vacío/formato incorrecto, contraseña vacía, nombre vacío, tipo/rol nulos."),
+            @ApiResponse(responseCode = "409", description = "Ya existen credenciales para el correo proporcionado.")
+    })
     public ResponseEntity<UserResponse> createCredentials(@Valid @RequestBody CreateCredentialRequest request) {
         User saved = createCredentialsUseCase.createCredentials(
                 request.getEmail(),

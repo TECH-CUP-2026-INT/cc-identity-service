@@ -4,6 +4,7 @@ import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
 import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 import co.edu.escuelaing.techcup.identity.domain.enums.UserType;
+import co.edu.escuelaing.techcup.identity.domain.exception.DomainException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserAlreadyExistsException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
@@ -31,10 +32,13 @@ public class RegisterUserUseCaseImpl implements RegisterUserUseCase {
         log.info("Creating admin/organizer: {}", user.getEmail());
         validateEmailNotExists(user.getEmail());
 
+        if (user.getUserType() == null || (user.getUserType() != UserType.ADMIN && user.getUserType() != UserType.ORGANIZER)) {
+            throw new DomainException("INVALID_USER_TYPE", "User type must be ADMIN or ORGANIZER");
+        }
+
         if (user.getUserType() == UserType.ADMIN) {
             user.setRole(UserRole.ADMIN);
         } else {
-            user.setUserType(UserType.ORGANIZER);
             user.setRole(UserRole.ORGANIZER);
         }
 

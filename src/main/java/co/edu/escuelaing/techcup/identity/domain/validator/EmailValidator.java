@@ -10,32 +10,28 @@ public final class EmailValidator {
     private EmailValidator() {}
 
     public static void validateInstitutionalEmail(String email) {
-        if (email == null || !email.toLowerCase().endsWith("@" + INSTITUTIONAL_DOMAIN)) {
+        if (!isInstitutionalEmail(email)) {
             throw new InvalidEmailDomainException(INSTITUTIONAL_DOMAIN);
         }
     }
 
     public static void validateGmailEmail(String email) {
-        if (email == null || !email.toLowerCase().endsWith("@" + GMAIL_DOMAIN)) {
+        if (!isGmailEmail(email)) {
             throw new InvalidEmailDomainException(GMAIL_DOMAIN);
         }
     }
 
     public static void validateInstitutionalOrGmail(String email) {
-        if (email == null) {
-            throw new InvalidEmailDomainException(INSTITUTIONAL_DOMAIN + " or " + GMAIL_DOMAIN);
-        }
-        String lower = email.toLowerCase();
-        if (!lower.endsWith("@" + INSTITUTIONAL_DOMAIN) && !lower.endsWith("@" + GMAIL_DOMAIN)) {
+        if (!isInstitutionalEmail(email) && !isGmailEmail(email)) {
             throw new InvalidEmailDomainException(INSTITUTIONAL_DOMAIN + " or " + GMAIL_DOMAIN);
         }
     }
 
     public static boolean isInstitutionalEmail(String email) {
-        return email != null && email.toLowerCase().endsWith("@" + INSTITUTIONAL_DOMAIN);
+        return email != null && !email.contains(" ") && email.toLowerCase().endsWith("@" + INSTITUTIONAL_DOMAIN);
     }
 
     public static boolean isGmailEmail(String email) {
-        return email != null && email.toLowerCase().endsWith("@" + GMAIL_DOMAIN);
+        return email != null && !email.contains(" ") && email.toLowerCase().endsWith("@" + GMAIL_DOMAIN);
     }
 }

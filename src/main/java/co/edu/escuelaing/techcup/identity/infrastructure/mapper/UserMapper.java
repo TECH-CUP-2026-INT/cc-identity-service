@@ -29,6 +29,5 @@ public interface UserMapper {
     @Mapping(target = "formerAcademicProgram", ignore = true)
     User toDomain(CreateAdminOrganizerRequest request);
 
-    @Mapping(target = "password", ignore = true)
     UserResponse toResponse(User user);
 }
