@@ -13,7 +13,11 @@ import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.AuditEventResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.AuditEventDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.OtpTokenDocument;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RecoveryTokenDocument;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RevokedTokenDocument;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.SessionActivityDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.UserDocument;
 
 import java.time.LocalDate;
@@ -213,4 +217,48 @@ public final class TestFixtures {
                 .build();
     }
 
+    public static RecoveryTokenDocument recoveryTokenDocument() {
+        RecoveryToken token = validRecoveryToken();
+        return RecoveryTokenDocument.builder()
+                .id(token.getId())
+                .userId(token.getUserId())
+                .code(token.getCode())
+                .used(token.isUsed())
+                .createdAt(token.getCreatedAt())
+                .expiresAt(token.getExpiresAt())
+                .build();
+    }
+
+    public static RevokedTokenDocument revokedTokenDocument() {
+        RevokedToken token = revokedToken();
+        return RevokedTokenDocument.builder()
+                .id(token.getId())
+                .token(token.getToken())
+                .userId(token.getUserId())
+                .revokedAt(token.getRevokedAt())
+                .expiresAt(token.getExpiresAt())
+                .build();
+    }
+
+    public static SessionActivityDocument sessionActivityDocument() {
+        SessionActivity activity = sessionActivity();
+        return SessionActivityDocument.builder()
+                .id(activity.getId())
+                .token(activity.getToken())
+                .userId(activity.getUserId())
+                .lastActivityAt(activity.getLastActivityAt())
+                .build();
+    }
+
+    public static AuditEventDocument auditEventDocument() {
+        AuditEvent event = auditEvent();
+        return AuditEventDocument.builder()
+                .id(event.getId())
+                .userId(event.getUserId())
+                .actionType(event.getActionType())
+                .description(event.getDescription())
+                .success(event.isSuccess())
+                .timestamp(event.getTimestamp())
+                .build();
+    }
 }
