@@ -3,8 +3,10 @@ package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.contro
 import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 import co.edu.escuelaing.techcup.identity.domain.enums.UserType;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserAlreadyExistsException;
+import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.CreateCredentialsUseCase;
+import co.edu.escuelaing.techcup.identity.domain.port.in.GetUserEmailUseCase;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.CreateCredentialRequest;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handler.GlobalExceptionHandler;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
@@ -26,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,6 +56,8 @@ class InternalCredentialControllerTest {
     private CreateCredentialsUseCase createCredentialsUseCase;
     @MockBean
     private co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase updateCredentialsUseCase;
+    @MockBean
+    private GetUserEmailUseCase getUserEmailUseCase;
     @MockBean
     private UserMapper userMapper;
 
@@ -112,6 +117,28 @@ class InternalCredentialControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorCode").value("USER_ALREADY_EXISTS"));
+    }
+
+    @Test
+    void getUserEmailReturnsEmail() throws Exception {
+        when(getUserEmailUseCase.getEmailByUserId(TestFixtures.USER_ID)).thenReturn(TestFixtures.EMAIL);
+
+        mockMvc.perform(get("/api/v1/internal/credentials/{userId}/email", TestFixtures.USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(TestFixtures.EMAIL));
+
+        verify(getUserEmailUseCase).getEmailByUserId(TestFixtures.USER_ID);
+    }
+
+    @Test
+    void getUserEmailReturnsNotFoundWhenUserMissing() throws Exception {
+        java.util.UUID missingUserId = java.util.UUID.randomUUID();
+        when(getUserEmailUseCase.getEmailByUserId(missingUserId))
+                .thenThrow(new UserNotFoundException(missingUserId.toString()));
+
+        mockMvc.perform(get("/api/v1/internal/credentials/{userId}/email", missingUserId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("USER_NOT_FOUND"));
     }
 
     private CreateCredentialRequest validRequest() {

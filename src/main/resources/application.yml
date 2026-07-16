@@ -35,6 +35,12 @@ jwt:
   secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyChangeInProduction2026!}
   expiration-ms: ${JWT_EXPIRATION:3600000}
 
+# Internal API key (service-to-service, e.g. am-notification-service resolving a recipient's email)
+techcup:
+  security:
+    internal:
+      api-key: ${INTERNAL_API_KEY:}
+
 # Auth Configuration
 auth:
   max-failed-login-attempts: ${AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}

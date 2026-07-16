@@ -6,6 +6,7 @@ import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +33,12 @@ public class SecurityConfig {
             "/actuator/health"
     };
 
+    // Consumido por am-notification-service para resolver el email de un recipientId
+    // (ver RecipientEmailResolver de ese servicio). A diferencia del resto de
+    // /api/v1/internal/**, expone un dato personal (email) a un servicio externo,
+    // así que requiere la API key interna en vez de heredar el permitAll general.
+    private static final String INTERNAL_USER_EMAIL_ENDPOINT = "/api/v1/internal/credentials/*/email";
+
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(
             JwtUtil jwtUtil,
@@ -42,15 +49,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public InternalApiKeyFilter internalApiKeyFilter(@Value("${techcup.security.internal.api-key:}") String internalApiKey) {
+        return new InternalApiKeyFilter(internalApiKey);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            InternalApiKeyFilter internalApiKeyFilter) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, INTERNAL_USER_EMAIL_ENDPOINT).hasRole("SERVICIO_INTERNO")
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
