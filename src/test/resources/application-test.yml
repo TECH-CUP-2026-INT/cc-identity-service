@@ -16,6 +16,10 @@ spring:
 jwt:
   secret: defaultSecretKeyForDevelopmentOnlyChangeInProduction2026!
   expiration-ms: 3600000
+techcup:
+  security:
+    internal:
+      api-key: test-internal-api-key
 auth:
   max-failed-login-attempts: 5
   lockout-duration-minutes: 15

@@ -20,8 +20,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "DTO interno para creación de credenciales desde users-players-service. " +
-        "Usado durante el registro de estudiantes (TC-01), invitados (TC-02), egresados (TC-03), " +
-        "administradores (TC-05) y árbitros (TC-04).")
+        "Usado durante el registro de estudiantes (Registro de Estudiante), invitados (Registro de Invitado), egresados (Registro de Egresado), " +
+        "administradores (Creación de Usuario Admin y Organizador) y árbitros (Creación de Cuenta de Árbitro).")
 public class CreateCredentialRequest {
 
     @NotNull(message = "User ID is required")
