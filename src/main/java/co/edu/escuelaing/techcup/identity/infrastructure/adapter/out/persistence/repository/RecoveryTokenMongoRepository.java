@@ -4,10 +4,11 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface RecoveryTokenMongoRepository extends MongoRepository<RecoveryTokenDocument, String> {
 
-    Optional<RecoveryTokenDocument> findTopByUserIdOrderByCreatedAtDesc(String userId);
+    Optional<RecoveryTokenDocument> findTopByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    void deleteAllByUserId(String userId);
+    void deleteAllByUserId(UUID userId);
 }

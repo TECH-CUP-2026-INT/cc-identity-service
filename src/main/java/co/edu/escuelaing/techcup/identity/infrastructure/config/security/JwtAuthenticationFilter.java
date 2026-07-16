@@ -1,6 +1,8 @@
 package co.edu.escuelaing.techcup.identity.infrastructure.config.security;
 
+import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.port.out.RevokedTokenRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final RevokedTokenRepositoryPort revokedTokenRepository;
+    private final SessionActivityRepositoryPort sessionActivityRepository;
+    private final int inactivityTimeoutMinutes;
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -41,8 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(BEARER_PREFIX.length());
 
         try {
-            if (jwtUtil.isTokenValid(token) && !revokedTokenRepository.existsByToken(token)) {
-                String userId = jwtUtil.extractUserId(token);
+            if (jwtUtil.isTokenValid(token) && !revokedTokenRepository.existsByToken(token) && isSessionActive(token)) {
+                UUID userId = jwtUtil.extractUserId(token);
                 String role = jwtUtil.extractRole(token);
 
                 var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
@@ -55,5 +60,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isSessionActive(String token) {
+        return sessionActivityRepository.findByToken(token)
+                .map(this::touchOrExpire)
+                .orElse(false);
+    }
+
+    private boolean touchOrExpire(SessionActivity activity) {
+        if (activity.isExpiredByInactivity(inactivityTimeoutMinutes)) {
+            sessionActivityRepository.deleteByToken(activity.getToken());
+            return false;
+        }
+        activity.touch();
+        sessionActivityRepository.save(activity);
+        return true;
     }
 }

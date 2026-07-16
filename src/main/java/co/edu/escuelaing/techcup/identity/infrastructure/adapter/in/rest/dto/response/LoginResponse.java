@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder
@@ -15,8 +17,8 @@ import lombok.Setter;
 @Schema(description = "Respuesta de login exitoso. El login NO está completo; se requiere verificación OTP.")
 public class LoginResponse {
 
-    @Schema(description = "ID del usuario autenticado. Necesario para el paso de verificación OTP.", example = "665f1a2b3c4d5e6f7a8b9c0d")
-    private String userId;
+    @Schema(description = "ID del usuario autenticado. Necesario para el paso de verificación OTP.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID userId;
 
     @Schema(description = "Mensaje indicando el siguiente paso del flujo de autenticación", example = "OTP sent to your email. Please validate to complete login.")
     private String message;

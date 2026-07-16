@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/audit")
@@ -58,7 +59,7 @@ public class AuditController {
             @Parameter(description = "Tipo de acción de auditoría para filtrar (ej: USER_LOGIN, USER_LOGOUT, PASSWORD_RESET)")
             @RequestParam(required = false) AuditActionType actionType,
             @Parameter(description = "ID del usuario para filtrar eventos específicos de un usuario")
-            @RequestParam(required = false) String userId) {
+            @RequestParam(required = false) UUID userId) {
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new DomainException("INVALID_DATE_RANGE", "startDate must be before or equal to endDate");

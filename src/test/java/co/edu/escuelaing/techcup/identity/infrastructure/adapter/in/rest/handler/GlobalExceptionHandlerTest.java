@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handle
 
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountBlockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountLockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.DomainException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidCredentialsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidEmailDomainException;
@@ -34,6 +35,8 @@ class GlobalExceptionHandlerTest {
                 HttpStatus.FORBIDDEN, "ACCOUNT_INACTIVE");
         assertError(handler.handleAccountBlocked(new AccountBlockedException()),
                 HttpStatus.FORBIDDEN, "ACCOUNT_BLOCKED");
+        assertError(handler.handleAccountLocked(new AccountLockedException(java.time.LocalDateTime.now())),
+                HttpStatus.FORBIDDEN, "ACCOUNT_LOCKED");
         assertError(handler.handleInvalidOtp(new InvalidOtpException("bad otp")),
                 HttpStatus.BAD_REQUEST, "INVALID_OTP");
         assertError(handler.handleInvalidToken(new InvalidTokenException("bad token")),

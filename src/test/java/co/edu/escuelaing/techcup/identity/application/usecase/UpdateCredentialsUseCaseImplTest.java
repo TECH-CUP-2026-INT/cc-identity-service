@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,9 +56,10 @@ class UpdateCredentialsUseCaseImplTest {
 
     @Test
     void updateRoleThrowsWhenUserNotFound() {
-        when(userRepository.findById("non-existent")).thenReturn(Optional.empty());
+        UUID missingUserId = UUID.randomUUID();
+        when(userRepository.findById(missingUserId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.updateRole("non-existent", UserRole.CAPTAIN))
+        assertThatThrownBy(() -> useCase.updateRole(missingUserId, UserRole.CAPTAIN))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(userRepository, never()).save(any());
@@ -82,9 +84,10 @@ class UpdateCredentialsUseCaseImplTest {
 
     @Test
     void updateStatusThrowsWhenUserNotFound() {
-        when(userRepository.findById("non-existent")).thenReturn(Optional.empty());
+        UUID missingUserId = UUID.randomUUID();
+        when(userRepository.findById(missingUserId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.updateStatus("non-existent", AccountStatus.INACTIVE))
+        assertThatThrownBy(() -> useCase.updateStatus(missingUserId, AccountStatus.INACTIVE))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(userRepository, never()).save(any());

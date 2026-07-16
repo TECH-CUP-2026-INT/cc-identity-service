@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 /**
  * Internal endpoint consumed by users-players-service for credential creation
  * during student, guest, and graduate registration (TC-01, TC-02, TC-03).
@@ -83,7 +85,7 @@ public class InternalCredentialController {
     })
     public ResponseEntity<MessageResponse> updateRole(
             @Parameter(description = "ID del usuario (generado por users-players-service)")
-            @PathVariable String userId,
+            @PathVariable UUID userId,
             @Valid @RequestBody UpdateRoleRequest request) {
         updateCredentialsUseCase.updateRole(userId, request.getRole());
         return ResponseEntity.ok(MessageResponse.builder()
@@ -106,7 +108,7 @@ public class InternalCredentialController {
     })
     public ResponseEntity<MessageResponse> updateStatus(
             @Parameter(description = "ID del usuario (generado por users-players-service)")
-            @PathVariable String userId,
+            @PathVariable UUID userId,
             @Valid @RequestBody UpdateStatusRequest request) {
         updateCredentialsUseCase.updateStatus(userId, request.getStatus());
         return ResponseEntity.ok(MessageResponse.builder()

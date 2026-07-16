@@ -81,7 +81,7 @@ class AuthControllerTest {
                                 .password(TestFixtures.PASSWORD)
                                 .build())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$.message").value("OTP sent to your email. Please validate to complete login."));
     }
 
@@ -124,7 +124,7 @@ class AuthControllerTest {
                                 .googleToken("google-token")
                                 .build())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID));
+                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID.toString()));
     }
 
     @Test
@@ -142,7 +142,7 @@ class AuthControllerTest {
                                 .build())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value(TestFixtures.JWT))
-                .andExpect(jsonPath("$.user.id").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$.user.id").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$.user.email").value(TestFixtures.EMAIL));
     }
 
@@ -196,7 +196,7 @@ class AuthControllerTest {
                         .header("Authorization", "Bearer " + TestFixtures.JWT))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
-                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$.email").value(TestFixtures.EMAIL))
                 .andExpect(jsonPath("$.role").value(user.getRole().name()));
     }

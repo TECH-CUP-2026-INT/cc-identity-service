@@ -1,6 +1,5 @@
 package co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document;
 
-import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,19 +17,17 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "audit_events")
-public class AuditEventDocument {
+@Document(collection = "session_activities")
+public class SessionActivityDocument {
 
     @Id
     private String id;
 
+    @Indexed(unique = true)
+    private String token;
+
     @Indexed
     private UUID userId;
 
-    private AuditActionType actionType;
-    private String description;
-    private boolean success;
-
-    @Indexed
-    private LocalDateTime timestamp;
+    private LocalDateTime lastActivityAt;
 }

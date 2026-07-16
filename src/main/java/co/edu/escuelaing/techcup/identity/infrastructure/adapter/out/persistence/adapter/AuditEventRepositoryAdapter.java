@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
 
     @Override
     public List<AuditEvent> findByFilters(LocalDateTime startDate, LocalDateTime endDate,
-                                           AuditActionType actionType, String userId) {
+                                           AuditActionType actionType, UUID userId) {
         Query query = new Query();
 
         if (startDate != null && endDate != null) {
@@ -49,7 +50,7 @@ public class AuditEventRepositoryAdapter implements AuditEventRepositoryPort {
             query.addCriteria(Criteria.where("actionType").is(actionType));
         }
 
-        if (userId != null && !userId.isBlank()) {
+        if (userId != null) {
             query.addCriteria(Criteria.where("userId").is(userId));
         }
 

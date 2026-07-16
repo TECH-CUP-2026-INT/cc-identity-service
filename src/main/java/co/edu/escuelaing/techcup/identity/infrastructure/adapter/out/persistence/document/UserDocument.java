@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -25,7 +26,7 @@ import java.time.LocalDateTime;
 public class UserDocument {
 
     @Id
-    private String id;
+    private UUID id;
 
     private String fullName;
 
@@ -45,6 +46,9 @@ public class UserDocument {
     private String associatedStudentId;
     private String relationship;
     private String formerAcademicProgram;
+
+    private int failedLoginAttempts;
+    private LocalDateTime lockedUntil;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

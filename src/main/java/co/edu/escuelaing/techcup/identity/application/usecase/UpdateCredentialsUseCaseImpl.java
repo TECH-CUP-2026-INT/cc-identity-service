@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,11 +26,11 @@ public class UpdateCredentialsUseCaseImpl implements UpdateCredentialsUseCase {
     private final AuditEventRepositoryPort auditRepository;
 
     @Override
-    public void updateRole(String userId, UserRole newRole) {
+    public void updateRole(UUID userId, UserRole newRole) {
         log.info("Updating role for user {} to {}", userId, newRole);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         UserRole previousRole = user.getRole();
         user.setRole(newRole);
@@ -46,11 +47,11 @@ public class UpdateCredentialsUseCaseImpl implements UpdateCredentialsUseCase {
     }
 
     @Override
-    public void updateStatus(String userId, AccountStatus newStatus) {
+    public void updateStatus(UUID userId, AccountStatus newStatus) {
         log.info("Updating status for user {} to {}", userId, newStatus);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         AccountStatus previousStatus = user.getStatus();
         user.setStatus(newStatus);

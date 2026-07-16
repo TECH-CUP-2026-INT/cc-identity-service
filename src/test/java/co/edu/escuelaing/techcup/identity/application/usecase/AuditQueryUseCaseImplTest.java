@@ -32,12 +32,12 @@ class AuditQueryUseCaseImplTest {
         LocalDateTime startDate = LocalDateTime.of(2026, Month.JANUARY, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.of(2026, Month.JANUARY, 31, 23, 59);
         List<AuditEvent> expected = List.of(TestFixtures.auditEvent());
-        when(auditRepository.findByFilters(startDate, endDate, AuditActionType.USER_LOGIN, "user-1"))
+        when(auditRepository.findByFilters(startDate, endDate, AuditActionType.USER_LOGIN, TestFixtures.USER_ID))
                 .thenReturn(expected);
 
-        List<AuditEvent> result = useCase.queryEvents(startDate, endDate, AuditActionType.USER_LOGIN, "user-1");
+        List<AuditEvent> result = useCase.queryEvents(startDate, endDate, AuditActionType.USER_LOGIN, TestFixtures.USER_ID);
 
         assertThat(result).isSameAs(expected);
-        verify(auditRepository).findByFilters(startDate, endDate, AuditActionType.USER_LOGIN, "user-1");
+        verify(auditRepository).findByFilters(startDate, endDate, AuditActionType.USER_LOGIN, TestFixtures.USER_ID);
     }
 }

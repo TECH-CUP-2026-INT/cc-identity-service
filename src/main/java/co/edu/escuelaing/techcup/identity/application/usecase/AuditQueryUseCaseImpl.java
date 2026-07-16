@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class AuditQueryUseCaseImpl implements AuditQueryUseCase {
 
     @Override
     public List<AuditEvent> queryEvents(LocalDateTime startDate, LocalDateTime endDate,
-                                         AuditActionType actionType, String userId) {
+                                         AuditActionType actionType, UUID userId) {
         log.info("Querying audit events with filters");
         return auditRepository.findByFilters(startDate, endDate, actionType, userId);
     }

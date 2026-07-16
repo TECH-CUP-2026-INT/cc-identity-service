@@ -9,6 +9,7 @@ import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
 import co.edu.escuelaing.techcup.identity.domain.model.RecoveryToken;
 import co.edu.escuelaing.techcup.identity.domain.model.RevokedToken;
+import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.AuditEventResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
@@ -16,16 +17,18 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.OtpTokenDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RecoveryTokenDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RevokedTokenDocument;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.SessionActivityDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.UserDocument;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 public final class TestFixtures {
 
-    public static final String USER_ID = "user-1";
+    public static final UUID USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     public static final String EMAIL = "student@escuelaing.edu.co";
     public static final String PASSWORD = "Password123!";
     public static final String ENCODED_PASSWORD = "encoded-password";
@@ -57,6 +60,14 @@ public final class TestFixtures {
     public static User inactiveUser() {
         User user = activeUser();
         user.setStatus(AccountStatus.INACTIVE);
+        return user;
+    }
+
+    public static User lockedUser() {
+        User user = activeUser();
+        user.setStatus(AccountStatus.LOCKED);
+        user.setFailedLoginAttempts(5);
+        user.setLockedUntil(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(15));
         return user;
     }
 
@@ -110,6 +121,15 @@ public final class TestFixtures {
         RecoveryToken token = validRecoveryToken();
         token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
         return token;
+    }
+
+    public static SessionActivity sessionActivity() {
+        return SessionActivity.builder()
+                .id("session-1")
+                .token(JWT)
+                .userId(USER_ID)
+                .lastActivityAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
     }
 
     public static RevokedToken revokedToken() {
@@ -217,6 +237,16 @@ public final class TestFixtures {
                 .userId(token.getUserId())
                 .revokedAt(token.getRevokedAt())
                 .expiresAt(token.getExpiresAt())
+                .build();
+    }
+
+    public static SessionActivityDocument sessionActivityDocument() {
+        SessionActivity activity = sessionActivity();
+        return SessionActivityDocument.builder()
+                .id(activity.getId())
+                .token(activity.getToken())
+                .userId(activity.getUserId())
+                .lastActivityAt(activity.getLastActivityAt())
                 .build();
     }
 

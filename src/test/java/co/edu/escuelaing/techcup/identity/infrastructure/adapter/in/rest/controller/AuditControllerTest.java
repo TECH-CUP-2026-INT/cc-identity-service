@@ -64,10 +64,10 @@ class AuditControllerTest {
                         .param("startDate", "2026-01-01T00:00:00")
                         .param("endDate", "2026-01-31T23:59:00")
                         .param("actionType", "USER_LOGIN")
-                        .param("userId", TestFixtures.USER_ID))
+                        .param("userId", TestFixtures.USER_ID.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("audit-1"))
-                .andExpect(jsonPath("$[0].userId").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$[0].userId").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$[0].actionType").value("USER_LOGIN"));
 
         verify(auditQueryUseCase).queryEvents(startDate, endDate, AuditActionType.USER_LOGIN, TestFixtures.USER_ID);

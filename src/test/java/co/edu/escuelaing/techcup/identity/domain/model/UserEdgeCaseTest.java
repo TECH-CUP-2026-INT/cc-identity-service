@@ -28,4 +28,21 @@ class UserEdgeCaseTest {
 
         assertThat(user.isActive()).isFalse();
     }
+
+    @Test
+    void isLockedReturnsFalseWhenStatusIsLockedButLockedUntilIsNull() {
+        User user = TestFixtures.activeUser();
+        user.setStatus(AccountStatus.LOCKED);
+        user.setLockedUntil(null);
+
+        assertThat(user.isLocked()).isFalse();
+    }
+
+    @Test
+    void isLockedReturnsFalseWhenStatusIsNotLockedEvenWithFutureLockedUntil() {
+        User user = TestFixtures.activeUser();
+        user.setLockedUntil(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).plusMinutes(10));
+
+        assertThat(user.isLocked()).isFalse();
+    }
 }

@@ -6,11 +6,13 @@ import co.edu.escuelaing.techcup.identity.domain.exception.InvalidOtpException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
+import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.OtpUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -33,6 +36,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
     private final EmailPort emailPort;
     private final JwtUtil jwtUtil;
     private final OtpUtil otpUtil;
+    private final SessionActivityRepositoryPort sessionActivityRepository;
 
     @Value("${otp.max-attempts:3}")
     private int maxAttempts;
@@ -44,11 +48,11 @@ public class OtpUseCaseImpl implements OtpUseCase {
     private int resendCooldownSeconds;
 
     @Override
-    public String validateOtp(String userId, String otpCode) {
+    public String validateOtp(UUID userId, String otpCode) {
         log.info("Validating OTP for user: {}", userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         OtpToken otp = otpRepository.findLatestByUserId(userId)
                 .orElseThrow(() -> new InvalidOtpException("No OTP found. Please request a new one."));
@@ -84,6 +88,12 @@ public class OtpUseCaseImpl implements OtpUseCase {
 
         String jwt = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
 
+        sessionActivityRepository.save(SessionActivity.builder()
+                .token(jwt)
+                .userId(user.getId())
+                .lastActivityAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build());
+
         auditRepository.save(AuditEvent.builder()
                 .userId(userId)
                 .actionType(AuditActionType.USER_LOGIN)
@@ -96,11 +106,11 @@ public class OtpUseCaseImpl implements OtpUseCase {
     }
 
     @Override
-    public void resendOtp(String userId) {
+    public void resendOtp(UUID userId) {
         log.info("Resending OTP for user: {}", userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         OtpToken existingOtp = otpRepository.findLatestByUserId(userId).orElse(null);
         if (existingOtp != null) {
@@ -129,7 +139,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
         emailPort.sendOtp(user.getEmail(), otpCode);
     }
 
-    private void auditOtpFailed(String userId, String reason) {
+    private void auditOtpFailed(UUID userId, String reason) {
         auditRepository.save(AuditEvent.builder()
                 .userId(userId)
                 .actionType(AuditActionType.OTP_FAILED)

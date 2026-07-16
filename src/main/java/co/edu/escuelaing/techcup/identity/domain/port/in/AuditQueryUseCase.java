@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public interface AuditQueryUseCase {
 
@@ -12,5 +13,5 @@ public interface AuditQueryUseCase {
      * TC-12: Consult Identity Service audit events with optional filters.
      */
     List<AuditEvent> queryEvents(LocalDateTime startDate, LocalDateTime endDate,
-                                  AuditActionType actionType, String userId);
+                                  AuditActionType actionType, UUID userId);
 }

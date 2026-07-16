@@ -3,6 +3,8 @@ package co.edu.escuelaing.techcup.identity.domain.port.in;
 import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 
+import java.util.UUID;
+
 /**
  * Internal port for inter-service credential updates.
  * Called by users-players-service (TC-18, TC-19) and teams-service (TC-27)
@@ -10,7 +12,7 @@ import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
  */
 public interface UpdateCredentialsUseCase {
 
-    void updateRole(String userId, UserRole newRole);
+    void updateRole(UUID userId, UserRole newRole);
 
-    void updateStatus(String userId, AccountStatus newStatus);
+    void updateStatus(UUID userId, AccountStatus newStatus);
 }

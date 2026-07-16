@@ -73,9 +73,9 @@ class RequestDtoValidationTest {
     }
 
     @Test
-    void otpResendRequestRejectsBlankUserId() {
+    void otpResendRequestRejectsNullUserId() {
         OtpResendRequest request = OtpResendRequest.builder()
-                .userId(" ")
+                .userId(null)
                 .build();
 
         assertThat(validator.validate(request))
@@ -119,7 +119,7 @@ class RequestDtoValidationTest {
     @Test
     void createCredentialRequestAcceptsStudentCredentialPayload() {
         CreateCredentialRequest request = CreateCredentialRequest.builder()
-                .userId("665f1a2b3c4d5e6f7a8b9c0d")
+                .userId(java.util.UUID.randomUUID())
                 .email("student@escuelaing.edu.co")
                 .password("Password123!")
                 .fullName("Ada Lovelace")

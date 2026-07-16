@@ -55,9 +55,10 @@ class RecoveryTokenRepositoryAdapterTest {
 
     @Test
     void findLatestByUserIdReturnsEmptyWhenMissing() {
-        when(mongoRepository.findTopByUserIdOrderByCreatedAtDesc("missing")).thenReturn(Optional.empty());
+        java.util.UUID missingUserId = java.util.UUID.randomUUID();
+        when(mongoRepository.findTopByUserIdOrderByCreatedAtDesc(missingUserId)).thenReturn(Optional.empty());
 
-        Optional<RecoveryToken> result = adapter.findLatestByUserId("missing");
+        Optional<RecoveryToken> result = adapter.findLatestByUserId(missingUserId);
 
         assertThat(result).isEmpty();
     }

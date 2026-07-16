@@ -99,11 +99,11 @@ class AuditEventRepositoryAdapterTest {
     }
 
     @Test
-    void findByFiltersIgnoresBlankUserIdAndAllowsEmptyFilterQuery() {
+    void findByFiltersWithNoFiltersAllowsEmptyFilterQuery() {
         when(mongoTemplate.find(org.mockito.ArgumentMatchers.any(Query.class), eq(AuditEventDocument.class)))
                 .thenReturn(List.of());
 
-        adapter.findByFilters(null, null, null, "   ");
+        adapter.findByFilters(null, null, null, null);
 
         assertThat(captureQuery().getQueryObject()).isEmpty();
     }

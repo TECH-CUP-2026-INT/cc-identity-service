@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class CreateCredentialsUseCaseImpl implements CreateCredentialsUseCase {
     private int otpExpirationMinutes;
 
     @Override
-    public User createCredentials(String userId, String email, String password, String fullName,
+    public User createCredentials(UUID userId, String email, String password, String fullName,
                                   UserType userType, UserRole role) {
         log.info("Creating credentials for: {} [{}] with userId: {}", email, userType, userId);
 

@@ -69,7 +69,7 @@ class InternalCredentialControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$.id").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$.email").value(TestFixtures.EMAIL));
 
         verify(createCredentialsUseCase).createCredentials(
@@ -79,7 +79,7 @@ class InternalCredentialControllerTest {
     @Test
     void createCredentialsValidationErrorsReturnBadRequest() throws Exception {
         CreateCredentialRequest request = CreateCredentialRequest.builder()
-                .userId("")
+                .userId(null)
                 .email("bad-email")
                 .password("")
                 .fullName("")

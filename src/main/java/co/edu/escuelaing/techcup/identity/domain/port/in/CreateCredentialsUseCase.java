@@ -4,6 +4,8 @@ import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 import co.edu.escuelaing.techcup.identity.domain.enums.UserType;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 
+import java.util.UUID;
+
 /**
  * Internal port for inter-service credential creation.
  * Called by users-players-service during any user registration (TC-01 through TC-05).
@@ -11,6 +13,6 @@ import co.edu.escuelaing.techcup.identity.domain.model.User;
  */
 public interface CreateCredentialsUseCase {
 
-    User createCredentials(String userId, String email, String password, String fullName,
+    User createCredentials(UUID userId, String email, String password, String fullName,
                            UserType userType, UserRole role);
 }

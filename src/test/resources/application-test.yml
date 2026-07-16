@@ -16,6 +16,10 @@ spring:
 jwt:
   secret: defaultSecretKeyForDevelopmentOnlyChangeInProduction2026!
   expiration-ms: 3600000
+auth:
+  max-failed-login-attempts: 5
+  lockout-duration-minutes: 15
+  inactivity-timeout-minutes: 30
 otp:
   expiration-minutes: 5
   max-attempts: 3

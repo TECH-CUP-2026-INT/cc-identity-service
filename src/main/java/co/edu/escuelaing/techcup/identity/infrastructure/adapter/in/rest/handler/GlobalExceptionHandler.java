@@ -2,6 +2,7 @@ package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handle
 
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountBlockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountLockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.DomainException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidCredentialsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidEmailDomainException;
@@ -52,6 +53,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccountBlockedException.class)
     public ResponseEntity<Map<String, Object>> handleAccountBlocked(AccountBlockedException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getErrorCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountLocked(AccountLockedException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getErrorCode(), ex.getMessage());
     }
 

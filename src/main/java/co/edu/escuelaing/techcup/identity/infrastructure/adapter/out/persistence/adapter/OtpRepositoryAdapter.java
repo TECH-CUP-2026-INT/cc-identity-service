@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -24,13 +25,13 @@ public class OtpRepositoryAdapter implements OtpRepositoryPort {
     }
 
     @Override
-    public Optional<OtpToken> findLatestByUserId(String userId) {
+    public Optional<OtpToken> findLatestByUserId(UUID userId) {
         return mongoRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
                 .map(mapper::toDomain);
     }
 
     @Override
-    public void deleteAllByUserId(String userId) {
+    public void deleteAllByUserId(UUID userId) {
         mongoRepository.deleteAllByUserId(userId);
     }
 }

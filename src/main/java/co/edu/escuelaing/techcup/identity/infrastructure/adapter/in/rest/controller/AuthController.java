@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Authentication", description = "Endpoints de autenticación, verificación OTP, recuperación de contraseña, validación de token JWT y cierre de sesión. " +
@@ -55,16 +57,18 @@ public class AuthController {
             description = "Autentica al usuario con su correo institucional (@escuelaing.edu.co) y contraseña. " +
                     "Si las credenciales son válidas, envía un código OTP al correo del usuario. " +
                     "El login NO está completo hasta que el OTP sea verificado mediante POST /otp/validate. " +
-                    "Registra evento de auditoría USER_LOGIN. La cuenta se bloquea tras múltiples intentos fallidos."
+                    "Registra evento de auditoría USER_LOGIN. La cuenta se bloquea temporalmente (por defecto 15 minutos) " +
+                    "tras alcanzar el máximo de intentos fallidos configurado (por defecto 5), y se desbloquea automáticamente " +
+                    "al vencer ese periodo."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Credenciales válidas. OTP enviado al correo del usuario."),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos (email vacío, formato incorrecto, JSON malformado)."),
             @ApiResponse(responseCode = "401", description = "Credenciales incorrectas (email o contraseña no coinciden)."),
-            @ApiResponse(responseCode = "403", description = "Cuenta inactiva o bloqueada por múltiples intentos fallidos.")
+            @ApiResponse(responseCode = "403", description = "Cuenta inactiva, o bloqueada temporalmente por múltiples intentos fallidos.")
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        String userId = authenticationUseCase.loginWithInstitutionalEmail(request.getEmail(), request.getPassword());
+        UUID userId = authenticationUseCase.loginWithInstitutionalEmail(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(LoginResponse.builder()
                 .userId(userId)
                 .message("OTP sent to your email. Please validate to complete login.")
@@ -75,9 +79,10 @@ public class AuthController {
     @Operation(
             summary = "TC-07: Iniciar sesión con Google OAuth 2.0",
             description = "Autentica al usuario mediante un token de Google OAuth 2.0 (obtenido con el flujo de consentimiento de Google). " +
-                    "El correo asociado a la cuenta de Google debe pertenecer al dominio institucional @escuelaing.edu.co. " +
-                    "Si el usuario no existe en el sistema, se crea automáticamente. Tras autenticación exitosa, se envía un OTP al correo. " +
-                    "Registra evento de auditoría GOOGLE_LOGIN."
+                    "Pensado para invitados, árbitros, egresados sin correo institucional activo y organizadores. " +
+                    "El usuario debe existir previamente en el sistema (creado vía el flujo de registro correspondiente); " +
+                    "este endpoint no crea cuentas nuevas. Tras autenticación exitosa, se envía un OTP al correo. " +
+                    "Registra evento de auditoría OTP_SENT."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Token de Google válido. OTP enviado al correo del usuario."),
@@ -85,7 +90,7 @@ public class AuthController {
             @ApiResponse(responseCode = "403", description = "Cuenta bloqueada o inactiva.")
     })
     public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
-        String userId = authenticationUseCase.loginWithGmail(request.getGoogleToken());
+        UUID userId = authenticationUseCase.loginWithGmail(request.getGoogleToken());
         return ResponseEntity.ok(LoginResponse.builder()
                 .userId(userId)
                 .message("OTP sent to your email. Please validate to complete login.")
@@ -175,14 +180,15 @@ public class AuthController {
     @Operation(
             summary = "TC-08: Validar token JWT",
             description = "Valida un token JWT enviado en el header Authorization (formato: 'Bearer <token>'). " +
-                    "Verifica la firma, expiración (TC-11), y que el token no haya sido revocado (TC-29). " +
-                    "Si es válido, retorna los datos del usuario: id, email y rol. " +
+                    "Verifica la firma, expiración absoluta, que no haya sido revocado (TC-29), y que la sesión no haya " +
+                    "expirado por inactividad (TC-11: por defecto 30 minutos sin actividad). Cada llamada válida renueva " +
+                    "la ventana de inactividad. Si es válido, retorna los datos del usuario: id, email y rol. " +
                     "Este endpoint es consumido por otros microservicios para verificar la autenticación del usuario."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Token válido. Retorna datos del usuario autenticado."),
             @ApiResponse(responseCode = "400", description = "Header Authorization ausente."),
-            @ApiResponse(responseCode = "401", description = "Token inválido, expirado, revocado, o header sin prefijo 'Bearer'.")
+            @ApiResponse(responseCode = "401", description = "Token inválido, expirado, revocado, sesión expirada por inactividad, o header sin prefijo 'Bearer'.")
     })
     public ResponseEntity<TokenValidationResponse> validateToken(
             @Parameter(description = "Header de autorización con formato 'Bearer <JWT>'", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")

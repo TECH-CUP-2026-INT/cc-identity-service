@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder
@@ -22,9 +24,9 @@ import lombok.Setter;
         "administradores (TC-05) y árbitros (TC-04).")
 public class CreateCredentialRequest {
 
-    @NotBlank(message = "User ID is required")
-    @Schema(description = "ID del usuario generado por users-players-service (fuente de verdad)", example = "665f1a2b3c4d5e6f7a8b9c0d")
-    private String userId;
+    @NotNull(message = "User ID is required")
+    @Schema(description = "ID del usuario generado por users-players-service (fuente de verdad)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID userId;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")

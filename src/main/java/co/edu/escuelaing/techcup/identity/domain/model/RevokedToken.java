@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ public class RevokedToken {
 
     private String id;
     private String token;
-    private String userId;
+    private UUID userId;
     private LocalDateTime revokedAt;
     private LocalDateTime expiresAt;
 }

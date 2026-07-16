@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ import java.time.ZoneOffset;
 public class RecoveryToken {
 
     private String id;
-    private String userId;
+    private UUID userId;
     private String code;
     private boolean used;
     private LocalDateTime createdAt;
