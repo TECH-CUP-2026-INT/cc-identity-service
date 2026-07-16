@@ -39,8 +39,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Authentication", description = "Endpoints de autenticación, verificación OTP, recuperación de contraseña, validación de token JWT y cierre de sesión. " +
-        "Cubre TC-06 (login institucional), TC-07 (login Google OAuth 2.0), TC-08 (validación JWT), " +
-        "TC-09 (recuperación de contraseña), TC-10 (verificación OTP), TC-11 (expiración JWT) y TC-29 (logout).")
+        "Cubre login institucional, login con Google OAuth 2.0, validación de JWT, " +
+        "recuperación de contraseña, verificación de OTP, expiración de JWT por inactividad y logout.")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -53,7 +53,7 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     @Operation(
-            summary = "TC-06: Iniciar sesión con correo institucional y contraseña",
+            summary = "Iniciar sesión con correo institucional y contraseña",
             description = "Autentica al usuario con su correo institucional (@escuelaing.edu.co) y contraseña. " +
                     "Si las credenciales son válidas, envía un código OTP al correo del usuario. " +
                     "El login NO está completo hasta que el OTP sea verificado mediante POST /otp/validate. " +
@@ -77,7 +77,7 @@ public class AuthController {
 
     @PostMapping("/auth/login/google")
     @Operation(
-            summary = "TC-07: Iniciar sesión con Google OAuth 2.0",
+            summary = "Iniciar sesión con Google OAuth 2.0",
             description = "Autentica al usuario mediante un token de Google OAuth 2.0 (obtenido con el flujo de consentimiento de Google). " +
                     "Pensado para invitados, árbitros, egresados sin correo institucional activo y organizadores. " +
                     "El usuario debe existir previamente en el sistema (creado vía el flujo de registro correspondiente); " +
@@ -99,7 +99,7 @@ public class AuthController {
 
     @PostMapping("/otp/validate")
     @Operation(
-            summary = "TC-10: Verificar código OTP y obtener token JWT",
+            summary = "Verificar código OTP y obtener token JWT",
             description = "Valida el código OTP de 6 dígitos enviado al correo del usuario durante el login. " +
                     "Si el OTP es correcto y no ha expirado (configurable, por defecto 5 minutos), genera y retorna un token JWT " +
                     "junto con los datos del usuario autenticado. El OTP tiene un máximo de intentos permitidos (por defecto 3); " +
@@ -120,7 +120,7 @@ public class AuthController {
 
     @PostMapping("/otp/resend")
     @Operation(
-            summary = "TC-10: Reenviar código OTP",
+            summary = "Reenviar código OTP",
             description = "Genera y envía un nuevo código OTP al correo del usuario, invalidando cualquier OTP anterior. " +
                     "Tiene un cooldown configurable (por defecto 60 segundos) entre reenvíos para prevenir abuso. " +
                     "El nuevo OTP tiene la misma duración de expiración que el original."
@@ -139,7 +139,7 @@ public class AuthController {
 
     @PostMapping("/password/recovery")
     @Operation(
-            summary = "TC-09: Solicitar código de recuperación de contraseña",
+            summary = "Solicitar código de recuperación de contraseña",
             description = "Envía un código de recuperación de un solo uso al correo institucional proporcionado. " +
                     "El código tiene un tiempo de expiración configurable (por defecto 15 minutos). " +
                     "Por seguridad, la respuesta siempre es 200 OK independientemente de si el correo existe en el sistema. " +
@@ -158,7 +158,7 @@ public class AuthController {
 
     @PostMapping("/password/reset")
     @Operation(
-            summary = "TC-09: Restablecer contraseña con código de recuperación",
+            summary = "Restablecer contraseña con código de recuperación",
             description = "Restablece la contraseña del usuario utilizando el código de recuperación recibido por correo. " +
                     "El código es de un solo uso y tiene tiempo de expiración (por defecto 15 minutos). " +
                     "La nueva contraseña se almacena con hash BCrypt. " +
@@ -178,10 +178,10 @@ public class AuthController {
 
     @PostMapping("/token/validate")
     @Operation(
-            summary = "TC-08: Validar token JWT",
+            summary = "Validar token JWT",
             description = "Valida un token JWT enviado en el header Authorization (formato: 'Bearer <token>'). " +
-                    "Verifica la firma, expiración absoluta, que no haya sido revocado (TC-29), y que la sesión no haya " +
-                    "expirado por inactividad (TC-11: por defecto 30 minutos sin actividad). Cada llamada válida renueva " +
+                    "Verifica la firma, expiración absoluta, que no haya sido revocado (logout), y que la sesión no haya " +
+                    "expirado por inactividad (expiración de JWT por inactividad: por defecto 30 minutos sin actividad). Cada llamada válida renueva " +
                     "la ventana de inactividad. Si es válido, retorna los datos del usuario: id, email y rol. " +
                     "Este endpoint es consumido por otros microservicios para verificar la autenticación del usuario."
     )
@@ -205,7 +205,7 @@ public class AuthController {
 
     @PostMapping("/auth/logout")
     @Operation(
-            summary = "TC-29: Cerrar sesión y revocar token JWT",
+            summary = "Cerrar sesión y revocar token JWT",
             description = "Cierra la sesión del usuario revocando su token JWT. El token se agrega a una lista de revocación en MongoDB " +
                     "con un índice TTL que lo elimina automáticamente al expirar. Cualquier intento de usar un token revocado " +
                     "será rechazado por el filtro de seguridad JWT. Registra evento de auditoría USER_LOGOUT."

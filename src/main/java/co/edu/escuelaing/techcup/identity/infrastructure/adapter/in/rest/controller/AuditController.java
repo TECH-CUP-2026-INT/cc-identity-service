@@ -27,7 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/audit")
 @Tag(name = "Audit", description = "Endpoints de consulta del registro de auditoría de eventos de seguridad. " +
-        "Cubre el requisito funcional TC-12. Solo accesible para usuarios con rol ADMIN. " +
+        "Cubre el requisito funcional de Consulta de Auditoría de Seguridad. Solo accesible para usuarios con rol ADMIN. " +
         "Permite filtrar eventos por rango de fechas, tipo de acción y usuario específico.")
 @RequiredArgsConstructor
 public class AuditController {
@@ -38,7 +38,7 @@ public class AuditController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
-            summary = "TC-12: Consultar eventos de auditoría con filtros opcionales",
+            summary = "Consultar eventos de auditoría con filtros opcionales",
             description = "Retorna la lista de eventos de auditoría de seguridad registrados en la plataforma. " +
                     "Todos los filtros son opcionales; sin filtros retorna todos los eventos. " +
                     "Los tipos de acción disponibles incluyen: USER_LOGIN, GOOGLE_LOGIN, USER_LOGOUT, USER_REGISTERED, " +

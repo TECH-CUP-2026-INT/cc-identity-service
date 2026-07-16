@@ -15,7 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "DTO interno para actualización de estado de cuenta desde users-players-service. " +
-        "Usado cuando el Admin deshabilita un usuario (TC-19).")
+        "Usado cuando el Admin deshabilita un usuario (Deshabilitación de Usuario).")
 public class UpdateStatusRequest {
 
     @NotNull(message = "Status is required")

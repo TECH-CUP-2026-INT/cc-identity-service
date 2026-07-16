@@ -29,7 +29,7 @@ import java.util.UUID;
 
 /**
  * Internal endpoint consumed by users-players-service for credential creation
- * during student, guest, and graduate registration (TC-01, TC-02, TC-03).
+ * during Student User Registration, Guest User Registration, and Graduate User Registration.
  */
 @RestController
 @RequestMapping("/api/v1/internal/credentials")
@@ -73,8 +73,8 @@ public class InternalCredentialController {
     @Operation(
             summary = "Actualizar rol de un usuario",
             description = "Actualiza el rol de autenticación de un usuario en Identity Service. " +
-                    "Consumido por users-players-service cuando un jugador se promueve a capitán (TC-18) " +
-                    "o por teams-service cuando se transfiere la capitanía (TC-27). " +
+                    "Consumido por users-players-service cuando un jugador se promueve a capitán (Promoción a Capitán) " +
+                    "o por teams-service cuando se transfiere la capitanía (Transferencia de Capitanía). " +
                     "El cambio se refleja en el próximo JWT generado al hacer login. " +
                     "Registra evento de auditoría ROLE_UPDATED."
     )
@@ -97,7 +97,7 @@ public class InternalCredentialController {
     @Operation(
             summary = "Actualizar estado de cuenta de un usuario",
             description = "Actualiza el estado de la cuenta de un usuario en Identity Service. " +
-                    "Consumido por users-players-service cuando el Admin deshabilita un usuario (TC-19). " +
+                    "Consumido por users-players-service cuando el Admin deshabilita un usuario (Deshabilitación de Usuario). " +
                     "Una cuenta INACTIVE no puede hacer login. " +
                     "Registra evento de auditoría STATUS_UPDATED."
     )

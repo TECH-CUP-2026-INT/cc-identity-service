@@ -15,7 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "DTO interno para actualización de rol desde users-players-service o teams-service. " +
-        "Usado cuando un jugador se vuelve capitán (TC-18) o se transfiere la capitanía (TC-27).")
+        "Usado cuando un jugador se vuelve capitán (Promoción a Capitán) o se transfiere la capitanía (Transferencia de Capitanía).")
 public class UpdateRoleRequest {
 
     @NotNull(message = "Role is required")
