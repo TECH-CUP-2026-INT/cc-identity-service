@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
@@ -48,8 +49,21 @@ public class TokenValidationUseCaseImpl implements TokenValidationUseCase {
         enforceSessionActivity(token);
 
         UUID userId = jwtUtil.extractUserId(token);
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId.toString()));
+
+        if (!user.isActive()) {
+            auditRepository.save(AuditEvent.builder()
+                    .userId(userId)
+                    .actionType(AuditActionType.ACCOUNT_DISABLED)
+                    .description("Token rejected — account is no longer active")
+                    .success(false)
+                    .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                    .build());
+            throw new AccountInactiveException();
+        }
+
+        return user;
     }
 
     private void enforceSessionActivity(String token) {

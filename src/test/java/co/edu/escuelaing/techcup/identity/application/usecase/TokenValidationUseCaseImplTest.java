@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
@@ -92,6 +93,25 @@ class TokenValidationUseCaseImplTest {
 
         verify(userRepository, never()).findById(org.mockito.ArgumentMatchers.any(UUID.class));
         verify(sessionActivityRepository, never()).findByToken(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void validateTokenRejectsWhenAccountWasDisabled() {
+        User user = TestFixtures.inactiveUser();
+        SessionActivity activity = TestFixtures.sessionActivity();
+        when(jwtUtil.isTokenValid(TestFixtures.JWT)).thenReturn(true);
+        when(revokedTokenRepository.existsByToken(TestFixtures.JWT)).thenReturn(false);
+        when(sessionActivityRepository.findByToken(TestFixtures.JWT)).thenReturn(Optional.of(activity));
+        when(jwtUtil.extractUserId(TestFixtures.JWT)).thenReturn(user.getId());
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> useCase.validateToken(TestFixtures.JWT))
+                .isInstanceOf(AccountInactiveException.class);
+
+        ArgumentCaptor<AuditEvent> auditCaptor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditRepository).save(auditCaptor.capture());
+        assertThat(auditCaptor.getValue().getActionType()).isEqualTo(AuditActionType.ACCOUNT_DISABLED);
+        assertThat(auditCaptor.getValue().isSuccess()).isFalse();
     }
 
     @Test
