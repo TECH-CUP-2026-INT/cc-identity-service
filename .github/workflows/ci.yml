@@ -2,7 +2,7 @@ name: CI - Build, Test, Publish & Deploy
 
 on:
   push:
-    branches: [ 'feat/**', 'develop', 'main' ]
+    branches: [ 'feat/**', 'develop', 'main', 'qa' ]
   pull_request:
     branches: [ 'develop', 'main' ]
 
@@ -14,36 +14,27 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: ubuntu-latest
-
     services:
       mongodb:
         image: mongo:7
         ports:
           - 27017:27017
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-
-      - name: Build and run tests
-        run: mvn clean verify -B
+      - run: mvn clean verify -B
         env:
           MONGODB_URI: mongodb://localhost:27017/identity_service_test
           GOOGLE_CLIENT_ID: test-google-client-id
           GOOGLE_CLIENT_SECRET: test-google-client-secret
           JWT_SECRET: ci-test-secret-key-for-github-actions-pipeline-2026!
           INTERNAL_API_KEY: test-internal-api-key
-
-      - name: Upload test reports
+      - uses: actions/upload-artifact@v4
         if: failure()
-        uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
           path: target/surefire-reports/
@@ -52,45 +43,36 @@ jobs:
   dockerize-publish:
     name: Build & Push Docker Image
     needs: build-test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/feat/')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/qa' || startsWith(github.ref, 'refs/heads/feat/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-
-      - name: Build JAR
-        run: mvn clean package -DskipTests -B
-
-      - name: Log in to GitHub Container Registry
+      - run: mvn clean package -DskipTests -B
+      - name: Login GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
+      - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=qa,enable=${{ github.ref == 'refs/heads/qa' }}
             type=ref,event=branch
             type=sha,format=short
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -100,13 +82,21 @@ jobs:
   deploy:
     name: Deploy to Azure App Service
     needs: dockerize-publish
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/qa'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Set target per branch
+        id: target
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/qa" ]]; then
+            echo "APP_NAME=${{ secrets.AZURE_WEBAPP_QA_NAME }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=qa" >> $GITHUB_OUTPUT
+          else
+            echo "APP_NAME=${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
+          fi
+      - uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          app-name: ${{ steps.target.outputs.APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ env.REGISTRY }}/${{ github.repository }}:latest
+          images: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.target.outputs.IMAGE_TAG }}
