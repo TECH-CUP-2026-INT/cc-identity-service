@@ -52,10 +52,11 @@ public class InternalCredentialController {
                     "tipo de usuario y rol. La cuenta se crea en estado ACTIVE. Si el email ya existe, retorna 409 Conflict. " +
                     "Envía OTP al correo del usuario. Registra evento de auditoría CREDENTIALS_CREATED."
     )
-    
+    @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Credenciales creadas exitosamente. Retorna datos del usuario."),
             @ApiResponse(responseCode = "400", description = "Datos inválidos: userId vacío, email vacío/formato incorrecto, contraseña vacía, nombre vacío, tipo/rol nulos."),
             @ApiResponse(responseCode = "409", description = "Ya existen credenciales para el correo proporcionado.")
+    })
     public ResponseEntity<UserResponse> createCredentials(@Valid @RequestBody CreateCredentialRequest request) {
         User saved = createCredentialsUseCase.createCredentials(
                 request.getUserId(),
@@ -77,10 +78,11 @@ public class InternalCredentialController {
                     "El cambio se refleja en el próximo JWT generado al hacer login. " +
                     "Registra evento de auditoría ROLE_UPDATED."
     )
-    
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Rol actualizado exitosamente."),
             @ApiResponse(responseCode = "400", description = "Rol nulo o inválido."),
             @ApiResponse(responseCode = "404", description = "No se encontraron credenciales para el userId proporcionado.")
+    })
     public ResponseEntity<MessageResponse> updateRole(
             @Parameter(description = "ID del usuario (generado por users-players-service)")
             @PathVariable UUID userId,
@@ -99,10 +101,11 @@ public class InternalCredentialController {
                     "Una cuenta INACTIVE no puede hacer login. " +
                     "Registra evento de auditoría STATUS_UPDATED."
     )
-    
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Estado actualizado exitosamente."),
             @ApiResponse(responseCode = "400", description = "Estado nulo o inválido."),
             @ApiResponse(responseCode = "404", description = "No se encontraron credenciales para el userId proporcionado.")
+    })
     public ResponseEntity<MessageResponse> updateStatus(
             @Parameter(description = "ID del usuario (generado por users-players-service)")
             @PathVariable UUID userId,

@@ -45,11 +45,12 @@ public class AuditController {
                     "OTP_VALIDATED, PASSWORD_RECOVERY_REQUEST, PASSWORD_RESET, TOKEN_VALIDATED, entre otros. " +
                     "Requiere autenticación JWT con rol ADMIN."
     )
-    
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de eventos de auditoría (puede estar vacía si no hay coincidencias)."),
             @ApiResponse(responseCode = "400", description = "Parámetro de consulta inválido (formato de fecha incorrecto, tipo de acción inexistente, o startDate posterior a endDate)."),
             @ApiResponse(responseCode = "401", description = "Token JWT ausente, inválido o expirado."),
             @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene rol ADMIN.")
+    })
     public ResponseEntity<List<AuditEventResponse>> queryEvents(
             @Parameter(description = "Fecha/hora de inicio del rango (formato ISO: yyyy-MM-ddTHH:mm:ss)", example = "2026-01-01T00:00:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
