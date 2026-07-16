@@ -11,6 +11,7 @@ import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.res
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserEmailResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,6 +40,7 @@ import java.util.UUID;
 @Tag(name = "Internal", description = "Endpoints internos para comunicación entre microservicios. " +
         "Consumido por users-players-service para gestión de credenciales, roles y estados de cuenta. " +
         "Estos endpoints NO deben exponerse al cliente final; están protegidos a nivel de red interna.")
+@Hidden
 @RequiredArgsConstructor
 public class InternalCredentialController {
 

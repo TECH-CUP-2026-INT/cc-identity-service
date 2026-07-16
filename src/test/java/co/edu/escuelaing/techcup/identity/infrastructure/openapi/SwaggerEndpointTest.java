@@ -58,8 +58,17 @@ class SwaggerEndpointTest {
                 .andExpect(jsonPath("$['paths']['/api/v1/password/recovery']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/token/validate']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/auth/logout']['post']").exists())
-                .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/audit']['get']").exists());
+    }
+
+    @Test
+    void openApiDocsHidesInternalCredentialsEndpoints() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials']").doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials/{userId}/role']").doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials/{userId}/status']").doesNotExist())
+                .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials/{userId}/email']").doesNotExist());
     }
 
     @Test
