@@ -28,7 +28,7 @@ spring:
             scope: openid, profile, email
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:5620}
 
 # JWT Configuration
 jwt:
