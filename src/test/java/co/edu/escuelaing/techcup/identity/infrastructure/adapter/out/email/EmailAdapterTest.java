@@ -48,16 +48,6 @@ class EmailAdapterTest {
         assertThat(message.getText()).contains("ABCD1234").contains("un solo uso");
     }
 
-    @Test
-    void sendTemporaryCredentialsBuildsCredentialsEmailMessage() {
-        adapter.sendTemporaryCredentials("referee@escuelaing.edu.co", "TempPass123");
-
-        SimpleMailMessage message = captureMessage();
-        assertThat(message.getTo()).containsExactly("referee@escuelaing.edu.co");
-        assertThat(message.getSubject()).contains("Credenciales temporales");
-        assertThat(message.getText()).contains("TempPass123").contains("árbitro");
-    }
-
     private SimpleMailMessage captureMessage() {
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(captor.capture());

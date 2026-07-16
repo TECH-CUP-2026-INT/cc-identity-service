@@ -56,9 +56,10 @@ class OtpRepositoryAdapterTest {
 
     @Test
     void findLatestByUserIdReturnsEmptyWhenMissing() {
-        when(mongoRepository.findTopByUserIdOrderByCreatedAtDesc("missing")).thenReturn(Optional.empty());
+        java.util.UUID missingUserId = java.util.UUID.randomUUID();
+        when(mongoRepository.findTopByUserIdOrderByCreatedAtDesc(missingUserId)).thenReturn(Optional.empty());
 
-        Optional<OtpToken> result = adapter.findLatestByUserId("missing");
+        Optional<OtpToken> result = adapter.findLatestByUserId(missingUserId);
 
         assertThat(result).isEmpty();
     }

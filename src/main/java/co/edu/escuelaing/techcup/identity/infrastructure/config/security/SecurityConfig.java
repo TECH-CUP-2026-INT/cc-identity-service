@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.infrastructure.config.security;
 
 import co.edu.escuelaing.techcup.identity.domain.port.out.RevokedTokenRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -20,7 +22,6 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
-            "/api/v1/register/**",
             "/api/v1/otp/**",
             "/api/v1/password/**",
             "/api/v1/token/validate",
@@ -32,8 +33,12 @@ public class SecurityConfig {
     };
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, RevokedTokenRepositoryPort revokedTokenRepository) {
-        return new JwtAuthenticationFilter(jwtUtil, revokedTokenRepository);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            RevokedTokenRepositoryPort revokedTokenRepository,
+            SessionActivityRepositoryPort sessionActivityRepository,
+            @Value("${auth.inactivity-timeout-minutes:30}") int inactivityTimeoutMinutes) {
+        return new JwtAuthenticationFilter(jwtUtil, revokedTokenRepository, sessionActivityRepository, inactivityTimeoutMinutes);
     }
 
     @Bean

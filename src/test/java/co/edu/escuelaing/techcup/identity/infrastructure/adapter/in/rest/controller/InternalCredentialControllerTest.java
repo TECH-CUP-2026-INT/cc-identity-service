@@ -52,6 +52,8 @@ class InternalCredentialControllerTest {
     @MockBean
     private CreateCredentialsUseCase createCredentialsUseCase;
     @MockBean
+    private co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase updateCredentialsUseCase;
+    @MockBean
     private UserMapper userMapper;
 
     @Test
@@ -59,7 +61,7 @@ class InternalCredentialControllerTest {
         CreateCredentialRequest request = validRequest();
         User savedUser = TestFixtures.activeUser();
         when(createCredentialsUseCase.createCredentials(
-                request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole()))
+                request.getUserId(), request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole()))
                 .thenReturn(savedUser);
         when(userMapper.toResponse(savedUser)).thenReturn(TestFixtures.userResponse());
 
@@ -67,16 +69,17 @@ class InternalCredentialControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(TestFixtures.USER_ID))
+                .andExpect(jsonPath("$.id").value(TestFixtures.USER_ID.toString()))
                 .andExpect(jsonPath("$.email").value(TestFixtures.EMAIL));
 
         verify(createCredentialsUseCase).createCredentials(
-                request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole());
+                request.getUserId(), request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole());
     }
 
     @Test
     void createCredentialsValidationErrorsReturnBadRequest() throws Exception {
         CreateCredentialRequest request = CreateCredentialRequest.builder()
+                .userId(null)
                 .email("bad-email")
                 .password("")
                 .fullName("")
@@ -89,6 +92,7 @@ class InternalCredentialControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors.userId").exists())
                 .andExpect(jsonPath("$.errors.email").exists())
                 .andExpect(jsonPath("$.errors.password").exists())
                 .andExpect(jsonPath("$.errors.fullName").exists())
@@ -100,7 +104,7 @@ class InternalCredentialControllerTest {
     void createCredentialsDuplicateEmailReturnsConflict() throws Exception {
         CreateCredentialRequest request = validRequest();
         when(createCredentialsUseCase.createCredentials(
-                request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole()))
+                request.getUserId(), request.getEmail(), request.getPassword(), request.getFullName(), request.getUserType(), request.getRole()))
                 .thenThrow(new UserAlreadyExistsException(request.getEmail()));
 
         mockMvc.perform(post("/api/v1/internal/credentials")
@@ -112,6 +116,7 @@ class InternalCredentialControllerTest {
 
     private CreateCredentialRequest validRequest() {
         return CreateCredentialRequest.builder()
+                .userId(TestFixtures.USER_ID)
                 .email(TestFixtures.EMAIL)
                 .password(TestFixtures.PASSWORD)
                 .fullName("Ada Lovelace")

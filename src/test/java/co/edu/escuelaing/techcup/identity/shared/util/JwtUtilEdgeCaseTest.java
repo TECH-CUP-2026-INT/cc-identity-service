@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.shared.util;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
+import co.edu.escuelaing.techcup.identity.support.TestFixtures;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +20,7 @@ class JwtUtilEdgeCaseTest {
     @Test
     void isTokenValidReturnsFalseForNullBlankAndTamperedTokenValues() {
         JwtUtil jwtUtil = new JwtUtil(SECRET, 3_600_000L);
-        String token = jwtUtil.generateToken("user-1", "student@escuelaing.edu.co", UserRole.PLAYER);
+        String token = jwtUtil.generateToken(TestFixtures.USER_ID, "student@escuelaing.edu.co", UserRole.PLAYER);
         String tampered = token.substring(0, token.length() - 2) + "xx";
 
         assertThat(jwtUtil.isTokenValid(null)).isFalse();

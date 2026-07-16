@@ -6,10 +6,12 @@ import co.edu.escuelaing.techcup.identity.domain.exception.InvalidOtpException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
+import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,6 +52,8 @@ class OtpUseCaseImplTest {
     private JwtUtil jwtUtil;
     @Mock
     private OtpUtil otpUtil;
+    @Mock
+    private SessionActivityRepositoryPort sessionActivityRepository;
 
     @InjectMocks
     private OtpUseCaseImpl useCase;
@@ -74,6 +79,12 @@ class OtpUseCaseImplTest {
         assertThat(otp.isUsed()).isTrue();
         verify(otpRepository).save(otp);
 
+        ArgumentCaptor<SessionActivity> sessionCaptor = ArgumentCaptor.forClass(SessionActivity.class);
+        verify(sessionActivityRepository).save(sessionCaptor.capture());
+        assertThat(sessionCaptor.getValue().getToken()).isEqualTo(TestFixtures.JWT);
+        assertThat(sessionCaptor.getValue().getUserId()).isEqualTo(TestFixtures.USER_ID);
+        assertThat(sessionCaptor.getValue().getLastActivityAt()).isNotNull();
+
         ArgumentCaptor<AuditEvent> auditCaptor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(auditRepository).save(auditCaptor.capture());
         assertThat(auditCaptor.getValue().getActionType()).isEqualTo(AuditActionType.USER_LOGIN);
@@ -82,9 +93,10 @@ class OtpUseCaseImplTest {
 
     @Test
     void validateOtpRejectsMissingUser() {
-        when(userRepository.findById("missing")).thenReturn(Optional.empty());
+        UUID missingUserId = UUID.randomUUID();
+        when(userRepository.findById(missingUserId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.validateOtp("missing", TestFixtures.OTP_CODE))
+        assertThatThrownBy(() -> useCase.validateOtp(missingUserId, TestFixtures.OTP_CODE))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(otpRepository, never()).findLatestByUserId(any());
@@ -222,9 +234,10 @@ class OtpUseCaseImplTest {
 
     @Test
     void resendOtpRejectsMissingUser() {
-        when(userRepository.findById("missing")).thenReturn(Optional.empty());
+        UUID missingUserId = UUID.randomUUID();
+        when(userRepository.findById(missingUserId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.resendOtp("missing"))
+        assertThatThrownBy(() -> useCase.resendOtp(missingUserId))
                 .isInstanceOf(UserNotFoundException.class);
     }
 

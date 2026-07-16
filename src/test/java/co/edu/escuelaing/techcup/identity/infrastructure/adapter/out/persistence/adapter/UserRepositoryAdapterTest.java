@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -33,9 +34,10 @@ class UserRepositoryAdapterTest {
         User user = TestFixtures.activeUser();
         UserDocument document = TestFixtures.userDocument();
         User savedUser = TestFixtures.activeUser();
-        savedUser.setId("saved-user");
+        UUID savedUserId = UUID.randomUUID();
+        savedUser.setId(savedUserId);
         UserDocument savedDocument = TestFixtures.userDocument();
-        savedDocument.setId("saved-user");
+        savedDocument.setId(savedUserId);
         when(userMapper.toDocument(user)).thenReturn(document);
         when(mongoRepository.save(document)).thenReturn(savedDocument);
         when(userMapper.toDomain(savedDocument)).thenReturn(savedUser);
@@ -60,9 +62,10 @@ class UserRepositoryAdapterTest {
 
     @Test
     void findByIdReturnsEmptyWhenMissing() {
-        when(mongoRepository.findById("missing")).thenReturn(Optional.empty());
+        UUID missingUserId = UUID.randomUUID();
+        when(mongoRepository.findById(missingUserId)).thenReturn(Optional.empty());
 
-        Optional<User> result = adapter.findById("missing");
+        Optional<User> result = adapter.findById(missingUserId);
 
         assertThat(result).isEmpty();
     }

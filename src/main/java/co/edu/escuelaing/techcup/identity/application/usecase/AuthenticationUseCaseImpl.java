@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
+import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountLockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidCredentialsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,12 +43,20 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
     @Value("${otp.expiration-minutes:5}")
     private int otpExpirationMinutes;
 
+    @Value("${auth.max-failed-login-attempts:5}")
+    private int maxFailedLoginAttempts;
+
+    @Value("${auth.lockout-duration-minutes:15}")
+    private int lockoutDurationMinutes;
+
     @Override
-    public String loginWithInstitutionalEmail(String email, String password) {
+    public UUID loginWithInstitutionalEmail(String email, String password) {
         log.info("Login attempt with institutional email: {}", email);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(InvalidCredentialsException::new);
+
+        enforceAccountNotLocked(user);
 
         if (!user.isActive()) {
             auditLoginFailed(user.getId(), "Account inactive");
@@ -53,8 +64,15 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
         }
 
         if (!passwordUtil.matches(password, user.getPassword())) {
+            user.registerFailedLoginAttempt(maxFailedLoginAttempts, lockoutDurationMinutes);
+            userRepository.save(user);
             auditLoginFailed(user.getId(), "Invalid password");
             throw new InvalidCredentialsException();
+        }
+
+        if (user.getFailedLoginAttempts() > 0) {
+            user.resetFailedLoginAttempts();
+            userRepository.save(user);
         }
 
         sendOtp(user);
@@ -62,7 +80,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
     }
 
     @Override
-    public String loginWithGmail(String googleToken) {
+    public UUID loginWithGmail(String googleToken) {
         log.info("Login attempt with Gmail OAuth");
 
         Map<String, String> googleUserInfo = googleOAuthPort.validateGoogleToken(googleToken);
@@ -71,6 +89,8 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
 
+        enforceAccountNotLocked(user);
+
         if (!user.isActive()) {
             auditLoginFailed(user.getId(), "Account inactive");
             throw new AccountInactiveException();
@@ -78,6 +98,20 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
 
         sendOtp(user);
         return user.getId();
+    }
+
+    private void enforceAccountNotLocked(User user) {
+        if (user.getStatus() != AccountStatus.LOCKED) {
+            return;
+        }
+
+        if (user.isLocked()) {
+            auditLoginFailed(user.getId(), "Account locked due to multiple failed attempts");
+            throw new AccountLockedException(user.getLockedUntil());
+        }
+
+        user.resetFailedLoginAttempts();
+        userRepository.save(user);
     }
 
     private void sendOtp(User user) {
@@ -105,7 +139,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .build());
     }
 
-    private void auditLoginFailed(String userId, String reason) {
+    private void auditLoginFailed(UUID userId, String reason) {
         auditRepository.save(AuditEvent.builder()
                 .userId(userId)
                 .actionType(AuditActionType.USER_LOGIN_FAILED)

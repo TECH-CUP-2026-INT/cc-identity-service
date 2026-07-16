@@ -13,6 +13,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,8 +23,8 @@ import java.time.LocalDateTime;
 @Schema(description = "Datos del usuario registrado en la plataforma TechCup. Los campos opcionales dependen del tipo de usuario.")
 public class UserResponse {
 
-    @Schema(description = "ID único del usuario en MongoDB", example = "665f1a2b3c4d5e6f7a8b9c0d")
-    private String id;
+    @Schema(description = "ID único del usuario (fuente de verdad: users-players-service)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID id;
 
     @Schema(description = "Nombre completo del usuario", example = "Juan Pérez García")
     private String fullName;

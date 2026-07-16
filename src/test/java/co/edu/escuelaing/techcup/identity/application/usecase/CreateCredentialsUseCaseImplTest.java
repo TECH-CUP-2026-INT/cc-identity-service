@@ -64,6 +64,7 @@ class CreateCredentialsUseCaseImplTest {
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
         User result = useCase.createCredentials(
+                TestFixtures.USER_ID,
                 TestFixtures.EMAIL,
                 TestFixtures.PASSWORD,
                 "Ada Lovelace",
@@ -75,6 +76,7 @@ class CreateCredentialsUseCaseImplTest {
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getId()).isEqualTo(TestFixtures.USER_ID);
         assertThat(userCaptor.getValue().getEmail()).isEqualTo(TestFixtures.EMAIL);
         assertThat(userCaptor.getValue().getPassword()).isEqualTo(TestFixtures.ENCODED_PASSWORD);
         assertThat(userCaptor.getValue().getStatus()).isEqualTo(AccountStatus.ACTIVE);
@@ -98,6 +100,7 @@ class CreateCredentialsUseCaseImplTest {
         when(userRepository.existsByEmail(TestFixtures.EMAIL)).thenReturn(true);
 
         assertThatThrownBy(() -> useCase.createCredentials(
+                TestFixtures.USER_ID,
                 TestFixtures.EMAIL,
                 TestFixtures.PASSWORD,
                 "Ada Lovelace",

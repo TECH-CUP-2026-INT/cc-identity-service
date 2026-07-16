@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 public class AuditEvent {
 
     private String id;
-    private String userId;
+    private UUID userId;
     private AuditActionType actionType;
     private String description;
     private boolean success;

@@ -1,7 +1,9 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
+import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
+import co.edu.escuelaing.techcup.identity.domain.exception.AccountLockedException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidCredentialsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,6 +62,8 @@ class AuthenticationUseCaseImplTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(useCase, "otpExpirationMinutes", 5);
+        ReflectionTestUtils.setField(useCase, "maxFailedLoginAttempts", 3);
+        ReflectionTestUtils.setField(useCase, "lockoutDurationMinutes", 15);
     }
 
     @Test
@@ -68,7 +73,7 @@ class AuthenticationUseCaseImplTest {
         when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
-        String userId = useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD);
+        UUID userId = useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD);
 
         assertThat(userId).isEqualTo(TestFixtures.USER_ID);
         verify(otpRepository).deleteAllByUserId(TestFixtures.USER_ID);
@@ -130,6 +135,83 @@ class AuthenticationUseCaseImplTest {
     }
 
     @Test
+    void loginWithInstitutionalEmailLocksAccountAfterMaxFailedAttempts() {
+        User user = TestFixtures.activeUser();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordUtil.matches("wrong", user.getPassword())).thenReturn(false);
+
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), "wrong"))
+                .isInstanceOf(InvalidCredentialsException.class);
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), "wrong"))
+                .isInstanceOf(InvalidCredentialsException.class);
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), "wrong"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        assertThat(user.getFailedLoginAttempts()).isEqualTo(3);
+        assertThat(user.getStatus()).isEqualTo(AccountStatus.LOCKED);
+
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD))
+                .isInstanceOf(AccountLockedException.class);
+        verify(otpRepository, never()).save(any());
+    }
+
+    @Test
+    void loginWithInstitutionalEmailRejectsAttemptWhileAccountIsLocked() {
+        User user = TestFixtures.lockedUser();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD))
+                .isInstanceOf(AccountLockedException.class);
+
+        ArgumentCaptor<AuditEvent> auditCaptor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditRepository).save(auditCaptor.capture());
+        assertThat(auditCaptor.getValue().getDescription()).isEqualTo("Account locked due to multiple failed attempts");
+        verify(passwordUtil, never()).matches(any(), any());
+    }
+
+    @Test
+    void loginWithInstitutionalEmailAutoUnlocksWhenLockWindowHasExpired() {
+        User user = TestFixtures.lockedUser();
+        user.setLockedUntil(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).minusMinutes(1));
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
+        when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
+
+        UUID userId = useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD);
+
+        assertThat(userId).isEqualTo(TestFixtures.USER_ID);
+        assertThat(user.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+        assertThat(user.getFailedLoginAttempts()).isZero();
+        verify(otpRepository).save(any(OtpToken.class));
+    }
+
+    @Test
+    void loginWithInstitutionalEmailResetsFailedAttemptsOnSuccessfulLogin() {
+        User user = TestFixtures.activeUser();
+        user.setFailedLoginAttempts(2);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
+        when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
+
+        useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD);
+
+        assertThat(user.getFailedLoginAttempts()).isZero();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void loginWithGmailRejectsAttemptWhileAccountIsLocked() {
+        User user = TestFixtures.lockedUser();
+        when(googleOAuthPort.validateGoogleToken("google-token"))
+                .thenReturn(Map.of("email", user.getEmail()));
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> useCase.loginWithGmail("google-token"))
+                .isInstanceOf(AccountLockedException.class);
+        verify(otpRepository, never()).save(any());
+    }
+
+    @Test
     void loginWithGmailValidatesGoogleTokenAndSendsOtp() {
         User user = TestFixtures.activeUser();
         when(googleOAuthPort.validateGoogleToken("google-token"))
@@ -137,7 +219,7 @@ class AuthenticationUseCaseImplTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
-        String userId = useCase.loginWithGmail("google-token");
+        UUID userId = useCase.loginWithGmail("google-token");
 
         assertThat(userId).isEqualTo(TestFixtures.USER_ID);
         verify(otpRepository).deleteAllByUserId(TestFixtures.USER_ID);

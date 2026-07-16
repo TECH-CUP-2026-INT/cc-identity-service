@@ -2,18 +2,18 @@ package co.edu.escuelaing.techcup.identity.infrastructure.mapper;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
-import co.edu.escuelaing.techcup.identity.domain.enums.UserType;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
 import co.edu.escuelaing.techcup.identity.domain.model.RecoveryToken;
 import co.edu.escuelaing.techcup.identity.domain.model.RevokedToken;
+import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
-import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.CreateAdminOrganizerRequest;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.AuditEventDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.OtpTokenDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RecoveryTokenDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.RevokedTokenDocument;
+import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.SessionActivityDocument;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.out.persistence.document.UserDocument;
 import co.edu.escuelaing.techcup.identity.support.TestFixtures;
 import org.junit.jupiter.api.Test;
@@ -28,28 +28,20 @@ class InfrastructureMapperTest {
     private final OtpTokenMapper otpTokenMapper = Mappers.getMapper(OtpTokenMapper.class);
     private final RecoveryTokenMapper recoveryTokenMapper = Mappers.getMapper(RecoveryTokenMapper.class);
     private final RevokedTokenMapper revokedTokenMapper = Mappers.getMapper(RevokedTokenMapper.class);
+    private final SessionActivityMapper sessionActivityMapper = Mappers.getMapper(SessionActivityMapper.class);
 
     @Test
-    void userMapperMapsDomainDocumentResponseAndAdminOrganizerRequest() {
+    void userMapperMapsDomainDocumentAndResponse() {
         User user = TestFixtures.activeUser();
 
         UserDocument document = userMapper.toDocument(user);
         User roundTrip = userMapper.toDomain(document);
         UserResponse response = userMapper.toResponse(user);
-        User fromRequest = userMapper.toDomain(CreateAdminOrganizerRequest.builder()
-                .fullName("Grace Hopper")
-                .email("organizer@escuelaing.edu.co")
-                .password("Password123!")
-                .userType(UserType.ORGANIZER)
-                .build());
 
         assertThat(document.getEmail()).isEqualTo(user.getEmail());
         assertThat(roundTrip.getId()).isEqualTo(user.getId());
         assertThat(roundTrip.getStatus()).isEqualTo(AccountStatus.ACTIVE);
         assertThat(response.getEmail()).isEqualTo(user.getEmail());
-        assertThat(fromRequest.getId()).isNull();
-        assertThat(fromRequest.getFullName()).isEqualTo("Grace Hopper");
-        assertThat(fromRequest.getRole()).isNull();
     }
 
     @Test
@@ -78,5 +70,9 @@ class InfrastructureMapperTest {
         RevokedToken revokedToken = TestFixtures.revokedToken();
         RevokedTokenDocument revokedDocument = revokedTokenMapper.toDocument(revokedToken);
         assertThat(revokedTokenMapper.toDomain(revokedDocument).getToken()).isEqualTo(revokedToken.getToken());
+
+        SessionActivity sessionActivity = TestFixtures.sessionActivity();
+        SessionActivityDocument sessionActivityDocument = sessionActivityMapper.toDocument(sessionActivity);
+        assertThat(sessionActivityMapper.toDomain(sessionActivityDocument).getToken()).isEqualTo(sessionActivity.getToken());
     }
 }

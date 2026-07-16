@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,8 +22,8 @@ public class AuditEventResponse {
     @Schema(description = "ID único del evento de auditoría", example = "668a1b2c3d4e5f6a7b8c9d0e")
     private String id;
 
-    @Schema(description = "ID del usuario que generó el evento", example = "665f1a2b3c4d5e6f7a8b9c0d")
-    private String userId;
+    @Schema(description = "ID del usuario que generó el evento", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID userId;
 
     @Schema(description = "Tipo de acción registrada (USER_LOGIN, USER_LOGOUT, PASSWORD_RESET, etc.)", example = "USER_LOGIN")
     private AuditActionType actionType;

@@ -12,6 +12,8 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -20,7 +22,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class User {
 
-    private String id;
+    private UUID id;
     private String fullName;
     private String email;
     private String password;
@@ -42,6 +44,11 @@ public class User {
     // Graduate-specific
     private String formerAcademicProgram;
 
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+
+    private LocalDateTime lockedUntil;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -49,6 +56,28 @@ public class User {
 
     public boolean isActive() {
         return this.status == AccountStatus.ACTIVE;
+    }
+
+    public boolean isLocked() {
+        return this.status == AccountStatus.LOCKED
+                && this.lockedUntil != null
+                && LocalDateTime.now(ZoneOffset.UTC).isBefore(this.lockedUntil);
+    }
+
+    public void registerFailedLoginAttempt(int maxAttempts, int lockoutDurationMinutes) {
+        this.failedLoginAttempts++;
+        if (this.failedLoginAttempts >= maxAttempts) {
+            this.status = AccountStatus.LOCKED;
+            this.lockedUntil = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(lockoutDurationMinutes);
+        }
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
+        if (this.status == AccountStatus.LOCKED) {
+            this.status = AccountStatus.ACTIVE;
+        }
     }
 
     public boolean isStudent() {

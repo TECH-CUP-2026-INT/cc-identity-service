@@ -5,6 +5,7 @@ import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.RevokedToken;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.RevokedTokenRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import co.edu.escuelaing.techcup.identity.support.TestFixtures;
 import io.jsonwebtoken.Claims;
@@ -34,6 +35,8 @@ class LogoutUseCaseImplTest {
     private JwtUtil jwtUtil;
     @Mock
     private Claims claims;
+    @Mock
+    private SessionActivityRepositoryPort sessionActivityRepository;
 
     @InjectMocks
     private LogoutUseCaseImpl useCase;
@@ -43,7 +46,7 @@ class LogoutUseCaseImplTest {
         Date expiration = Date.from(Instant.now().plusSeconds(3_600));
         when(revokedTokenRepository.existsByToken(TestFixtures.JWT)).thenReturn(false);
         when(jwtUtil.extractClaims(TestFixtures.JWT)).thenReturn(claims);
-        when(claims.getSubject()).thenReturn(TestFixtures.USER_ID);
+        when(claims.getSubject()).thenReturn(TestFixtures.USER_ID.toString());
         when(claims.getExpiration()).thenReturn(expiration);
 
         useCase.logout(TestFixtures.JWT);
@@ -53,6 +56,8 @@ class LogoutUseCaseImplTest {
         assertThat(revokedCaptor.getValue().getToken()).isEqualTo(TestFixtures.JWT);
         assertThat(revokedCaptor.getValue().getUserId()).isEqualTo(TestFixtures.USER_ID);
         assertThat(revokedCaptor.getValue().getExpiresAt()).isNotNull();
+
+        verify(sessionActivityRepository).deleteByToken(TestFixtures.JWT);
 
         ArgumentCaptor<AuditEvent> auditCaptor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(auditRepository).save(auditCaptor.capture());
@@ -68,6 +73,7 @@ class LogoutUseCaseImplTest {
 
         verify(jwtUtil, never()).extractClaims(TestFixtures.JWT);
         verify(revokedTokenRepository, never()).save(org.mockito.ArgumentMatchers.any(RevokedToken.class));
+        verify(sessionActivityRepository, never()).deleteByToken(org.mockito.ArgumentMatchers.anyString());
         verify(auditRepository, never()).save(org.mockito.ArgumentMatchers.any(AuditEvent.class));
     }
 
@@ -79,6 +85,7 @@ class LogoutUseCaseImplTest {
         useCase.logout(TestFixtures.JWT);
 
         verify(revokedTokenRepository, never()).save(org.mockito.ArgumentMatchers.any(RevokedToken.class));
+        verify(sessionActivityRepository, never()).deleteByToken(org.mockito.ArgumentMatchers.anyString());
         verify(auditRepository, never()).save(org.mockito.ArgumentMatchers.any(AuditEvent.class));
     }
 }

@@ -43,16 +43,4 @@ public class EmailAdapter implements EmailPort {
         mailSender.send(message);
     }
 
-    @Override
-    public void sendTemporaryCredentials(String email, String temporaryPassword) {
-        log.info("Sending temporary credentials to: {}", email);
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(email);
-        message.setSubject("TechCup - Credenciales temporales");
-        message.setText("Se ha creado tu cuenta de árbitro en TechCup." +
-                "\n\nTu contraseña temporal es: " + temporaryPassword +
-                "\n\nPor favor, cambia tu contraseña después de iniciar sesión.");
-        mailSender.send(message);
-    }
 }

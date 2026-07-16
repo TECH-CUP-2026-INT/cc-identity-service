@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,15 +40,16 @@ public class CreateCredentialsUseCaseImpl implements CreateCredentialsUseCase {
     private int otpExpirationMinutes;
 
     @Override
-    public User createCredentials(String email, String password, String fullName,
+    public User createCredentials(UUID userId, String email, String password, String fullName,
                                   UserType userType, UserRole role) {
-        log.info("Creating credentials for: {} [{}]", email, userType);
+        log.info("Creating credentials for: {} [{}] with userId: {}", email, userType, userId);
 
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException(email);
         }
 
         User user = User.builder()
+                .id(userId)
                 .email(email)
                 .fullName(fullName)
                 .password(passwordUtil.encode(password))

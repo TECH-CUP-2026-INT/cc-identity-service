@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -26,10 +27,10 @@ public class RevokedTokenDocument {
     private String token;
 
     @Indexed
-    private String userId;
+    private UUID userId;
 
     private LocalDateTime revokedAt;
 
-    @Indexed(expireAfterSeconds = 0)
+    @Indexed(expireAfter = "0s")
     private LocalDateTime expiresAt;
 }

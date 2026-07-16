@@ -132,7 +132,7 @@ class AuthControllerEdgeCaseTest {
 
         mockMvc.perform(post("/api/v1/otp/validate")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":\"user-1\",\"otpCode\":\"12A45\"}"))
+                        .content("{\"userId\":\"" + TestFixtures.USER_ID + "\",\"otpCode\":\"12A45\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value(TestFixtures.JWT));
 
@@ -216,7 +216,7 @@ class AuthControllerEdgeCaseTest {
                         .header("Authorization", "Bearer   " + TestFixtures.JWT + "   "))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.valid").value(true))
-                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID));
+                .andExpect(jsonPath("$.userId").value(TestFixtures.USER_ID.toString()));
 
         verify(tokenValidationUseCase).validateToken(TestFixtures.JWT);
     }

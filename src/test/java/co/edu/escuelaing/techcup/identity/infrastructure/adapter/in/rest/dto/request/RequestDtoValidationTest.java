@@ -73,9 +73,9 @@ class RequestDtoValidationTest {
     }
 
     @Test
-    void otpResendRequestRejectsBlankUserId() {
+    void otpResendRequestRejectsNullUserId() {
         OtpResendRequest request = OtpResendRequest.builder()
-                .userId(" ")
+                .userId(null)
                 .build();
 
         assertThat(validator.validate(request))
@@ -113,12 +113,13 @@ class RequestDtoValidationTest {
 
         assertThat(validator.validate(request))
                 .extracting(violation -> violation.getPropertyPath().toString())
-                .containsExactlyInAnyOrder("email", "password", "fullName", "userType", "role");
+                .containsExactlyInAnyOrder("userId", "email", "password", "fullName", "userType", "role");
     }
 
     @Test
     void createCredentialRequestAcceptsStudentCredentialPayload() {
         CreateCredentialRequest request = CreateCredentialRequest.builder()
+                .userId(java.util.UUID.randomUUID())
                 .email("student@escuelaing.edu.co")
                 .password("Password123!")
                 .fullName("Ada Lovelace")
@@ -129,24 +130,4 @@ class RequestDtoValidationTest {
         assertThat(validator.validate(request)).isEmpty();
     }
 
-    @Test
-    void createAdminOrganizerRequestRejectsEveryMissingRequiredField() {
-        CreateAdminOrganizerRequest request = CreateAdminOrganizerRequest.builder().build();
-
-        assertThat(validator.validate(request))
-                .extracting(violation -> violation.getPropertyPath().toString())
-                .containsExactlyInAnyOrder("fullName", "email", "password", "userType");
-    }
-
-    @Test
-    void createAdminOrganizerRequestAcceptsOrganizerPayload() {
-        CreateAdminOrganizerRequest request = CreateAdminOrganizerRequest.builder()
-                .fullName("Grace Hopper")
-                .email("organizer@escuelaing.edu.co")
-                .password("Password123!")
-                .userType(UserType.ORGANIZER)
-                .build();
-
-        assertThat(validator.validate(request)).isEmpty();
-    }
 }

@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder
@@ -18,8 +20,8 @@ public class TokenValidationResponse {
     @Schema(description = "Indica si el token es válido (firma correcta, no expirado, no revocado)", example = "true")
     private boolean valid;
 
-    @Schema(description = "ID del usuario propietario del token", example = "665f1a2b3c4d5e6f7a8b9c0d")
-    private String userId;
+    @Schema(description = "ID del usuario propietario del token", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID userId;
 
     @Schema(description = "Correo institucional del usuario", example = "juan.perez@escuelaing.edu.co")
     private String email;
