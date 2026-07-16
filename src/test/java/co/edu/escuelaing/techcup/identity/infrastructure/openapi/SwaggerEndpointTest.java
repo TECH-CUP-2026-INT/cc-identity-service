@@ -58,7 +58,6 @@ class SwaggerEndpointTest {
                 .andExpect(jsonPath("$['paths']['/api/v1/password/recovery']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/token/validate']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/auth/logout']['post']").exists())
-                .andExpect(jsonPath("$['paths']['/api/v1/register/admin-organizer']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials']['post']").exists())
                 .andExpect(jsonPath("$['paths']['/api/v1/audit']['get']").exists());
     }

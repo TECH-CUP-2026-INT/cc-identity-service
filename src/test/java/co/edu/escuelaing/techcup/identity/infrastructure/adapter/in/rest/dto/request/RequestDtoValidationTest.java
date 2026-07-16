@@ -113,12 +113,13 @@ class RequestDtoValidationTest {
 
         assertThat(validator.validate(request))
                 .extracting(violation -> violation.getPropertyPath().toString())
-                .containsExactlyInAnyOrder("email", "password", "fullName", "userType", "role");
+                .containsExactlyInAnyOrder("userId", "email", "password", "fullName", "userType", "role");
     }
 
     @Test
     void createCredentialRequestAcceptsStudentCredentialPayload() {
         CreateCredentialRequest request = CreateCredentialRequest.builder()
+                .userId("665f1a2b3c4d5e6f7a8b9c0d")
                 .email("student@escuelaing.edu.co")
                 .password("Password123!")
                 .fullName("Ada Lovelace")
@@ -129,24 +130,4 @@ class RequestDtoValidationTest {
         assertThat(validator.validate(request)).isEmpty();
     }
 
-    @Test
-    void createAdminOrganizerRequestRejectsEveryMissingRequiredField() {
-        CreateAdminOrganizerRequest request = CreateAdminOrganizerRequest.builder().build();
-
-        assertThat(validator.validate(request))
-                .extracting(violation -> violation.getPropertyPath().toString())
-                .containsExactlyInAnyOrder("fullName", "email", "password", "userType");
-    }
-
-    @Test
-    void createAdminOrganizerRequestAcceptsOrganizerPayload() {
-        CreateAdminOrganizerRequest request = CreateAdminOrganizerRequest.builder()
-                .fullName("Grace Hopper")
-                .email("organizer@escuelaing.edu.co")
-                .password("Password123!")
-                .userType(UserType.ORGANIZER)
-                .build();
-
-        assertThat(validator.validate(request)).isEmpty();
-    }
 }

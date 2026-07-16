@@ -30,6 +30,6 @@ public class RevokedTokenDocument {
 
     private LocalDateTime revokedAt;
 
-    @Indexed(expireAfterSeconds = 0)
+    @Indexed(expireAfter = "0s")
     private LocalDateTime expiresAt;
 }

@@ -5,7 +5,6 @@ import co.edu.escuelaing.techcup.identity.domain.port.out.GoogleOAuthPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,19 +13,20 @@ import java.util.Map;
 @Component
 public class GoogleOAuthAdapter implements GoogleOAuthPort {
 
-    private static final String GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo?id_token=";
+    private final GoogleTokenInfoClient googleTokenInfoClient;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
 
+    public GoogleOAuthAdapter(GoogleTokenInfoClient googleTokenInfoClient) {
+        this.googleTokenInfoClient = googleTokenInfoClient;
+    }
+
     @Override
-    @SuppressWarnings("unchecked")
     public Map<String, String> validateGoogleToken(String googleToken) {
         log.info("Validating Google OAuth token");
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            Map<String, Object> response = restTemplate.getForObject(
-                    GOOGLE_TOKEN_INFO_URL + googleToken, Map.class);
+            Map<String, Object> response = googleTokenInfoClient.getTokenInfo(googleToken);
 
             if (response == null || !googleClientId.equals(response.get("aud"))) {
                 throw new InvalidCredentialsException("Invalid Google token: audience mismatch");

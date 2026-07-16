@@ -63,8 +63,6 @@ class SwaggerContractEdgeCaseTest {
                         startsWith("#/components/schemas/PasswordRecoveryRequest")))
                 .andExpect(jsonPath("$['paths']['/api/v1/password/reset']['post']['requestBody']['content']['application/json']['schema']['$ref']",
                         startsWith("#/components/schemas/PasswordResetRequest")))
-                .andExpect(jsonPath("$['paths']['/api/v1/register/admin-organizer']['post']['requestBody']['content']['application/json']['schema']['$ref']",
-                        startsWith("#/components/schemas/CreateAdminOrganizerRequest")))
                 .andExpect(jsonPath("$['paths']['/api/v1/internal/credentials']['post']['requestBody']['content']['application/json']['schema']['$ref']",
                         startsWith("#/components/schemas/CreateCredentialRequest")));
     }
@@ -76,8 +74,7 @@ class SwaggerContractEdgeCaseTest {
                 .andExpect(jsonPath("$['components']['schemas']['LoginRequest']['required']", hasItems("email", "password")))
                 .andExpect(jsonPath("$['components']['schemas']['OtpValidationRequest']['required']", hasItems("userId", "otpCode")))
                 .andExpect(jsonPath("$['components']['schemas']['PasswordResetRequest']['required']", hasItems("email", "recoveryCode", "newPassword")))
-                .andExpect(jsonPath("$['components']['schemas']['CreateCredentialRequest']['required']", hasItems("email", "password", "fullName", "userType", "role")))
-                .andExpect(jsonPath("$['components']['schemas']['CreateAdminOrganizerRequest']['required']", hasItems("fullName", "email", "password", "userType")))
+                .andExpect(jsonPath("$['components']['schemas']['CreateCredentialRequest']['required']", hasItems("userId", "email", "password", "fullName", "userType", "role")))
                 .andExpect(jsonPath("$['paths']['/api/v1/audit']['get']['parameters'][*]['name']",
                         hasItems("startDate", "endDate", "actionType", "userId")));
     }

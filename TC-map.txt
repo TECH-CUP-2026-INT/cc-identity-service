@@ -1,0 +1,236 @@
+================================================================================
+                    MAPA COMPLETO DE CASOS DE PRUEBA (TC)
+          Microservicios: Identity, Users & Players, Teams
+================================================================================
+
+================================================================================
+ IDENTITY SERVICE (8 TCs) — Autenticación y sesiones, NO crea usuarios
+================================================================================
+
+TC-06  Login con email y password
+       Dependencias externas: NINGUNA
+       Flujo: Recibe email+password, valida credenciales en su BD local,
+              genera OTP, lo envía por email (EmailPort propio).
+
+TC-07  Login con Google OAuth
+       Dependencias externas: Google OAuth (externo, GoogleOAuthPort)
+       Flujo: Recibe token de Google, valida con Google, busca/crea
+              registro de credenciales, genera OTP.
+
+TC-08  Validación de OTP
+       Dependencias externas: NINGUNA
+       Flujo: Recibe userId+otpCode, valida contra OTP almacenado,
+              si es correcto genera JWT con userId+email+role.
+
+TC-09  Reenvío de OTP
+       Dependencias externas: NINGUNA
+       Flujo: Invalida OTP anterior, genera uno nuevo, lo envía por email.
+              Tiene cooldown de 60s.
+
+TC-10  Envío de OTP (parte del flujo de login)
+       Dependencias externas: Communications (EmailPort — envío de correo)
+       Flujo: Genera código OTP, lo persiste, lo envía al email del usuario.
+
+TC-11  Recuperación de contraseña
+       Dependencias externas: Communications (EmailPort — envío de correo)
+       Flujo: Recibe email, genera código de recuperación, lo envía por email.
+
+TC-12  Restablecimiento de contraseña
+       Dependencias externas: NINGUNA
+       Flujo: Recibe email+recoveryCode+newPassword, valida código,
+              actualiza contraseña hasheada.
+
+TC-29  Logout (revocar JWT)
+       Dependencias externas: NINGUNA
+       Flujo: Recibe JWT del header Authorization, extrae userId del token,
+              persiste token en colección de revocados, retorna confirmación.
+              NO se comunica con otros servicios.
+
+--- ENDPOINTS INTERNOS DE IDENTITY (consumidos por otros servicios) ---
+
+POST   /api/v1/internal/credentials
+       Consumido por: Users & Players Service
+       Payload: { userId, email, password, fullName, userType, role }
+       Propósito: Crear registro de credenciales cuando U&P crea un usuario.
+                  El userId viene de Users & Players (fuente de verdad).
+
+PUT    /api/v1/internal/credentials/{userId}/role
+       Consumido por: Users & Players (TC-18), Teams (TC-27)
+       Payload: { role: "CAPTAIN" | "PLAYER" | ... }
+       Propósito: Actualizar el rol en las credenciales de Identity.
+
+PUT    /api/v1/internal/credentials/{userId}/status
+       Consumido por: Users & Players (TC-19)
+       Payload: { status: "ACTIVE" | "INACTIVE" | ... }
+       Propósito: Deshabilitar/habilitar cuenta en Identity.
+
+
+================================================================================
+ USERS & PLAYERS SERVICE (12 TCs) — Fuente de verdad de TODOS los usuarios
+================================================================================
+
+TC-01  Registro de estudiante
+       Dependencias externas: Identity (POST /internal/credentials)
+       Flujo: Recibe datos del estudiante, genera userId, persiste perfil,
+              llama a Identity para crear credenciales con ese userId.
+
+TC-02  Registro de invitado externo
+       Dependencias externas: Identity (POST /internal/credentials)
+       Flujo: Igual que TC-01 pero con userType=GUEST.
+
+TC-03  Registro de egresado
+       Dependencias externas: Identity (POST /internal/credentials)
+       Flujo: Igual que TC-01 pero con userType=GRADUATE.
+
+TC-04  Creación de árbitro (por admin)
+       Dependencias externas: Identity (POST /internal/credentials)
+       Flujo: Admin crea perfil de árbitro, genera userId, persiste perfil,
+              llama a Identity para crear credenciales con role=REFEREE.
+              Se generan credenciales temporales para el árbitro.
+
+TC-05  Creación de admin/organizador (por admin)
+       Dependencias externas: Identity (POST /internal/credentials)
+       Flujo: Admin crea perfil de admin u organizador, genera userId,
+              persiste perfil, llama a Identity para crear credenciales
+              con role=ADMIN o ORGANIZER.
+
+TC-13  Consultar perfil propio
+       Dependencias externas: NINGUNA
+       Flujo: Extrae userId del JWT, busca perfil en su BD, retorna datos.
+
+TC-14  Editar perfil propio
+       Dependencias externas: NINGUNA
+       Flujo: Extrae userId del JWT, actualiza campos permitidos del perfil.
+
+TC-15  Consultar perfil de otro jugador
+       Dependencias externas: NINGUNA
+       Flujo: Recibe playerId por path, busca perfil, retorna datos públicos.
+
+TC-16  Consultar historial de torneos de un jugador
+       Dependencias externas: Tournament Service (consultar torneos del jugador)
+       Estado: PENDIENTE — requiere Tournament Service.
+
+TC-17  Consultar estadísticas de un jugador
+       Dependencias externas: Tournament Service (consultar stats del jugador)
+       Estado: PENDIENTE — requiere Tournament Service.
+
+TC-18  Ascenso a capitán
+       Dependencias externas: Identity (PUT /internal/credentials/{userId}/role)
+                              Teams (validar que el jugador es capitán válido)
+       Flujo: Cambia rol del jugador a CAPTAIN en U&P, luego llama a
+              Identity para sincronizar el rol en las credenciales.
+
+TC-19  Deshabilitar usuario
+       Dependencias externas: Identity (PUT /internal/credentials/{userId}/status)
+                              Tournament Service (validar que no tenga torneos activos)
+       Estado: PARCIALMENTE PENDIENTE — necesita Tournament Service para validación.
+       Flujo: Admin deshabilita usuario en U&P, llama a Identity para
+              cambiar status a INACTIVE en las credenciales.
+
+--- ENDPOINTS INTERNOS DE USERS & PLAYERS (consumidos por otros servicios) ---
+
+GET    /api/v1/internal/players/{playerId}/exists
+       Consumido por: Teams Service (TC-25 — verificar que jugador existe)
+
+GET    /api/v1/internal/players/{playerId}/profile
+       Consumido por: Teams Service (TC-22 — obtener perfiles de miembros)
+
+GET    /api/v1/internal/players/{playerId}/captaincy
+       Consumido por: Teams Service — validar si jugador ya es capitán
+
+
+================================================================================
+ TEAMS SERVICE (9 TCs) — Gestión de equipos
+================================================================================
+
+TC-20  Crear equipo
+       Dependencias externas: NINGUNA (solo necesita userId del JWT)
+       Flujo: Capitán crea equipo, se asigna como capitán del equipo.
+
+TC-21  Consultar equipos de un torneo
+       Dependencias externas: Tournament Service (validar torneo existe)
+       Estado: PENDIENTE — requiere Tournament Service.
+
+TC-22  Consultar detalle de un equipo
+       Dependencias externas: Users & Players (GET /internal/players/{id}/profile)
+       Flujo: Retorna datos del equipo + perfiles de los miembros
+              consultando Users & Players por cada miembro.
+
+TC-23  Editar equipo
+       Dependencias externas: NINGUNA
+       Flujo: Capitán edita nombre, logo, descripción de su equipo.
+
+TC-24  Inscribir equipo a torneo
+       Dependencias externas: Tournament Service (validar torneo abierto,
+                              verificar requisitos de inscripción)
+       Estado: PENDIENTE — requiere Tournament Service.
+
+TC-25  Invitar jugador al equipo
+       Dependencias externas: Users & Players (GET /internal/players/{id}/exists)
+                              Communications (NotificationPort — enviar invitación)
+       Flujo: Capitán invita jugador, se verifica que existe en U&P,
+              se crea invitación pendiente, se notifica al jugador.
+
+TC-26  Aceptar/rechazar invitación
+       Dependencias externas: NINGUNA
+       Flujo: Jugador acepta o rechaza invitación pendiente.
+              Si acepta, se agrega como miembro del equipo.
+
+TC-27  Transferir capitanía
+       Dependencias externas: Identity (PUT /internal/credentials/{userId}/role)
+                              Communications (NotificationPort — notificar transferencia)
+       Flujo: Capitán actual transfiere capitanía a otro miembro.
+              Se actualiza rol en Teams, luego se llama a Identity para:
+              - Nuevo capitán: role → CAPTAIN
+              - Capitán anterior: role → PLAYER
+              Se notifica a ambos jugadores.
+
+TC-28  Eliminar equipo
+       Dependencias externas: Tournament Service (validar no inscrito en torneo activo)
+       Estado: PENDIENTE — requiere Tournament Service.
+
+
+================================================================================
+ RESUMEN DE DEPENDENCIAS INTER-SERVICIO
+================================================================================
+
+Users & Players → Identity:
+  - POST /internal/credentials           (TC-01, TC-02, TC-03, TC-04, TC-05)
+  - PUT  /internal/credentials/{id}/role  (TC-18)
+  - PUT  /internal/credentials/{id}/status (TC-19)
+
+Teams → Identity:
+  - PUT /internal/credentials/{id}/role   (TC-27)
+
+Teams → Users & Players:
+  - GET /internal/players/{id}/exists     (TC-25)
+  - GET /internal/players/{id}/profile    (TC-22)
+
+Teams → Communications:
+  - NotificationPort                      (TC-25, TC-27)
+
+Identity → Communications:
+  - EmailPort (sendOtp, sendRecoveryCode) (TC-06, TC-07, TC-09, TC-10, TC-11)
+
+
+================================================================================
+ RESUMEN: TCs IMPLEMENTABLES AHORA vs PENDIENTES
+================================================================================
+
+IDENTITY (todos implementables ahora):
+  TC-06, TC-07, TC-08, TC-09, TC-10, TC-11, TC-12, TC-29 ✓
+
+USERS & PLAYERS (implementables ahora — solo dependen de Identity):
+  TC-01, TC-02, TC-03, TC-04, TC-05, TC-13, TC-14, TC-15, TC-18 ✓
+
+USERS & PLAYERS (pendientes — necesitan Tournament Service):
+  TC-16, TC-17, TC-19 ✗
+
+TEAMS (implementables ahora):
+  TC-20, TC-23, TC-26 ✓
+
+TEAMS (implementables con stub de U&P/Communications):
+  TC-22, TC-25, TC-27 ~ (ya tienen stub adapters)
+
+TEAMS (pendientes — necesitan Tournament Service):
+  TC-21, TC-24, TC-28 ✗

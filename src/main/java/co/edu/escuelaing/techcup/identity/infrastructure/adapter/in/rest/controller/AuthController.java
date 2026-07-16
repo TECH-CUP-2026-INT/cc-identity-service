@@ -37,9 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Authentication", description = "Endpoints de autenticación, verificación OTP, recuperación de contraseña, validación de token JWT y cierre de sesión. " +
-        "Cubre los requisitos funcionales TC-06 (login institucional), TC-07 (login Google OAuth 2.0), TC-08 (validación JWT), " +
-        "TC-09 (recuperación de contraseña con código de un solo uso), TC-10 (verificación OTP obligatoria en cada login), " +
-        "TC-11 (expiración configurable de JWT) y TC-29 (logout con revocación de token).")
+        "Cubre TC-06 (login institucional), TC-07 (login Google OAuth 2.0), TC-08 (validación JWT), " +
+        "TC-09 (recuperación de contraseña), TC-10 (verificación OTP), TC-11 (expiración JWT) y TC-29 (logout).")
 @RequiredArgsConstructor
 public class AuthController {
 
