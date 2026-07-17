@@ -6,12 +6,15 @@ import co.edu.escuelaing.techcup.identity.domain.exception.InvalidOtpException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
+import co.edu.escuelaing.techcup.identity.domain.exception.UserProfileUnavailableException;
 import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
+import co.edu.escuelaing.techcup.identity.domain.model.UserProfileSnapshot;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.UserProfilePort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
@@ -54,6 +57,8 @@ class OtpUseCaseImplTest {
     private OtpUtil otpUtil;
     @Mock
     private SessionActivityRepositoryPort sessionActivityRepository;
+    @Mock
+    private UserProfilePort userProfilePort;
 
     @InjectMocks
     private OtpUseCaseImpl useCase;
@@ -71,6 +76,8 @@ class OtpUseCaseImplTest {
         OtpToken otp = TestFixtures.validOtp();
         when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(user));
         when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(otp));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus.ACTIVE));
         when(jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole())).thenReturn(TestFixtures.JWT);
 
         String jwt = useCase.validateOtp(TestFixtures.USER_ID, TestFixtures.OTP_CODE);
@@ -89,6 +96,22 @@ class OtpUseCaseImplTest {
         verify(auditRepository).save(auditCaptor.capture());
         assertThat(auditCaptor.getValue().getActionType()).isEqualTo(AuditActionType.USER_LOGIN);
         assertThat(auditCaptor.getValue().isSuccess()).isTrue();
+    }
+
+    @Test
+    void validateOtpFailsWhenUsersPlayersServiceIsUnavailable() {
+        User user = TestFixtures.activeUser();
+        OtpToken otp = TestFixtures.validOtp();
+        when(userRepository.findById(TestFixtures.USER_ID)).thenReturn(Optional.of(user));
+        when(otpRepository.findLatestByUserId(TestFixtures.USER_ID)).thenReturn(Optional.of(otp));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenThrow(new UserProfileUnavailableException(user.getId().toString()));
+
+        assertThatThrownBy(() -> useCase.validateOtp(TestFixtures.USER_ID, TestFixtures.OTP_CODE))
+                .isInstanceOf(UserProfileUnavailableException.class);
+
+        verify(jwtUtil, never()).generateToken(any(), any(), any());
+        verify(sessionActivityRepository, never()).save(any());
     }
 
     @Test

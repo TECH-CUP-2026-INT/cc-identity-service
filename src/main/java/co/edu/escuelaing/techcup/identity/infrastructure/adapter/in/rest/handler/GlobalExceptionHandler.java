@@ -11,6 +11,7 @@ import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException
 import co.edu.escuelaing.techcup.identity.domain.exception.RecoveryCodeExpiredException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserAlreadyExistsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
+import co.edu.escuelaing.techcup.identity.domain.exception.UserProfileUnavailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,6 +80,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecoveryCodeExpiredException.class)
     public ResponseEntity<Map<String, Object>> handleRecoveryCodeExpired(RecoveryCodeExpiredException ex) {
         return buildResponse(HttpStatus.GONE, ex.getErrorCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(UserProfileUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleUserProfileUnavailable(UserProfileUnavailableException ex) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(DomainException.class)
