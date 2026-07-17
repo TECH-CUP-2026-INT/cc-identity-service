@@ -12,12 +12,12 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Respuesta de verificación OTP exitosa. Contiene el JWT y datos del usuario autenticado.")
+@Schema(description = "Successful OTP verification response. Contains JWT and authenticated user data.")
 public class OtpResponse {
 
-    @Schema(description = "Token JWT para autenticación en requests posteriores. Incluir como 'Bearer <token>' en el header Authorization.", example = "eyJhbGciOiJIUzI1NiJ9...")
+    @Schema(description = "JWT token for authentication in subsequent requests. Include as 'Bearer <token>' en el header Authorization.", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String token;
 
-    @Schema(description = "Datos del usuario autenticado")
+    @Schema(description = "Authenticated user data")
     private UserResponse user;
 }

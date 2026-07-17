@@ -28,7 +28,7 @@ spring:
             scope: openid, profile, email
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:5620}
 
 # JWT Configuration
 jwt:
@@ -40,6 +40,11 @@ techcup:
   security:
     internal:
       api-key: ${INTERNAL_API_KEY:}
+
+# Users & Players Service (fuente de verdad de rol/estado; identity los consulta en vivo)
+users:
+  service:
+    base-url: ${USERS_SERVICE_URL:http://localhost:8084/api/v1}
 
 # Auth Configuration
 auth:

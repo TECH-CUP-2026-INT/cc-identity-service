@@ -17,8 +17,8 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("TechCup Identity Service API")
                         .version("1.0.0")
-                        .description("Microservicio de identidad para la plataforma TechCup. " +
-                                "Gestiona registro, autenticación, OTP, recuperación de contraseña y auditoría."))
+                        .description("Identity microservice for the TechCup platform. " +
+                                "Manages registration, authentication, OTP, password recovery, and audit logging."))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication",

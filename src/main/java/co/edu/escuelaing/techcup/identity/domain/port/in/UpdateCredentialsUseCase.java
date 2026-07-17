@@ -7,12 +7,12 @@ import java.util.UUID;
 
 /**
  * Internal port for inter-service credential updates.
- * Called by users-players-service (TC-18, TC-19) and teams-service (TC-27)
- * to keep Identity's auth records in sync.
+ * Called by users-players-service (role change on captain promotion, status change on user disabling)
+ * and by teams-service (captaincy transfer).
  */
 public interface UpdateCredentialsUseCase {
 
-    void updateRole(UUID userId, UserRole newRole);
+    void updateRole(UUID userId, UserRole role);
 
-    void updateStatus(UUID userId, AccountStatus newStatus);
+    void updateStatus(UUID userId, AccountStatus status);
 }

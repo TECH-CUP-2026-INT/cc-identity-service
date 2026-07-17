@@ -13,7 +13,9 @@ import co.edu.escuelaing.techcup.identity.domain.port.in.AuthenticationUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.GoogleOAuthPort;
+import co.edu.escuelaing.techcup.identity.domain.model.UserProfileSnapshot;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.UserProfilePort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.PasswordUtil;
@@ -37,6 +39,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
     private final AuditEventRepositoryPort auditRepository;
     private final EmailPort emailPort;
     private final GoogleOAuthPort googleOAuthPort;
+    private final UserProfilePort userProfilePort;
     private final PasswordUtil passwordUtil;
     private final OtpUtil otpUtil;
 
@@ -57,11 +60,7 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .orElseThrow(InvalidCredentialsException::new);
 
         enforceAccountNotLocked(user);
-
-        if (!user.isActive()) {
-            auditLoginFailed(user.getId(), "Account inactive");
-            throw new AccountInactiveException();
-        }
+        enforceAccountActiveInUsersPlayers(user);
 
         if (!passwordUtil.matches(password, user.getPassword())) {
             user.registerFailedLoginAttempt(maxFailedLoginAttempts, lockoutDurationMinutes);
@@ -90,14 +89,18 @@ public class AuthenticationUseCaseImpl implements AuthenticationUseCase {
                 .orElseThrow(() -> new UserNotFoundException(email));
 
         enforceAccountNotLocked(user);
-
-        if (!user.isActive()) {
-            auditLoginFailed(user.getId(), "Account inactive");
-            throw new AccountInactiveException();
-        }
+        enforceAccountActiveInUsersPlayers(user);
 
         sendOtp(user);
         return user.getId();
+    }
+
+    private void enforceAccountActiveInUsersPlayers(User user) {
+        UserProfileSnapshot profile = userProfilePort.fetchProfile(user.getId());
+        if (!profile.isActive()) {
+            auditLoginFailed(user.getId(), "Account inactive");
+            throw new AccountInactiveException();
+        }
     }
 
     private void enforceAccountNotLocked(User user) {

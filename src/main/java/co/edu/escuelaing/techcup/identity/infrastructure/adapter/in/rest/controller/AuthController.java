@@ -38,9 +38,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Authentication", description = "Endpoints de autenticación, verificación OTP, recuperación de contraseña, validación de token JWT y cierre de sesión. " +
-        "Cubre login institucional, login con Google OAuth 2.0, validación de JWT, " +
-        "recuperación de contraseña, verificación de OTP, expiración de JWT por inactividad y logout.")
+@Tag(name = "Authentication", description = "Authentication endpoints: login, OTP verification, password recovery, JWT validation, and logout. " +
+        "Covers institutional login, Google OAuth 2.0 login, JWT validation, " +
+        "password recovery, OTP verification, JWT inactivity expiration, and logout.")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -53,19 +53,19 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     @Operation(
-            summary = "Iniciar sesión con correo institucional y contraseña",
-            description = "Autentica al usuario con su correo institucional (@escuelaing.edu.co) y contraseña. " +
-                    "Si las credenciales son válidas, envía un código OTP al correo del usuario. " +
-                    "El login NO está completo hasta que el OTP sea verificado mediante POST /otp/validate. " +
-                    "Registra evento de auditoría USER_LOGIN. La cuenta se bloquea temporalmente (por defecto 15 minutos) " +
-                    "tras alcanzar el máximo de intentos fallidos configurado (por defecto 5), y se desbloquea automáticamente " +
-                    "al vencer ese periodo."
+            summary = "Login with institutional email and password",
+            description = "Authenticates the user with their institutional email (@escuelaing.edu.co) and password. " +
+                    "If credentials are valid, sends an OTP code to the user's email. " +
+                    "Login is NOT complete until the OTP is verified via POST /otp/validate. " +
+                    "Logs USER_LOGIN audit event. The account is temporarily locked (default 15 minutes) " +
+                    "after reaching the configured max failed attempts (default 5), and unlocks automatically " +
+                    "when that period expires."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Credenciales válidas. OTP enviado al correo del usuario."),
-            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos (email vacío, formato incorrecto, JSON malformado)."),
-            @ApiResponse(responseCode = "401", description = "Credenciales incorrectas (email o contraseña no coinciden)."),
-            @ApiResponse(responseCode = "403", description = "Cuenta inactiva, o bloqueada temporalmente por múltiples intentos fallidos.")
+            @ApiResponse(responseCode = "200", description = "Valid credentials. OTP sent to user's email."),
+            @ApiResponse(responseCode = "400", description = "Invalid input (empty email, wrong format, malformed JSON)."),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials (email or password don't match)."),
+            @ApiResponse(responseCode = "403", description = "Inactive account, or temporarily locked due to multiple failed attempts.")
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         UUID userId = authenticationUseCase.loginWithInstitutionalEmail(request.getEmail(), request.getPassword());
@@ -77,17 +77,17 @@ public class AuthController {
 
     @PostMapping("/auth/login/google")
     @Operation(
-            summary = "Iniciar sesión con Google OAuth 2.0",
-            description = "Autentica al usuario mediante un token de Google OAuth 2.0 (obtenido con el flujo de consentimiento de Google). " +
-                    "Pensado para invitados, árbitros, egresados sin correo institucional activo y organizadores. " +
-                    "El usuario debe existir previamente en el sistema (creado vía el flujo de registro correspondiente); " +
-                    "este endpoint no crea cuentas nuevas. Tras autenticación exitosa, se envía un OTP al correo. " +
-                    "Registra evento de auditoría OTP_SENT."
+            summary = "Login with Google OAuth 2.0",
+            description = "Authenticates the user via a Google OAuth 2.0 token (obtained through Google's consent flow). " +
+                    "Intended for guests, referees, alumni without active institutional email, and organizers. " +
+                    "The user must already exist in the system (created via the corresponding registration flow); " +
+                    "this endpoint does NOT create new accounts. After successful authentication, an OTP is sent to the email. " +
+                    "Logs OTP_SENT audit event."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Token de Google válido. OTP enviado al correo del usuario."),
-            @ApiResponse(responseCode = "400", description = "Token de Google vacío o inválido, o dominio de correo no institucional."),
-            @ApiResponse(responseCode = "403", description = "Cuenta bloqueada o inactiva.")
+            @ApiResponse(responseCode = "200", description = "Valid Google token. OTP sent to user's email."),
+            @ApiResponse(responseCode = "400", description = "Empty or invalid Google token, or non-institutional email domain."),
+            @ApiResponse(responseCode = "403", description = "Blocked or inactive account.")
     })
     public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
         UUID userId = authenticationUseCase.loginWithGmail(request.getGoogleToken());
@@ -99,15 +99,15 @@ public class AuthController {
 
     @PostMapping("/otp/validate")
     @Operation(
-            summary = "Verificar código OTP y obtener token JWT",
-            description = "Valida el código OTP de 6 dígitos enviado al correo del usuario durante el login. " +
-                    "Si el OTP es correcto y no ha expirado (configurable, por defecto 5 minutos), genera y retorna un token JWT " +
-                    "junto con los datos del usuario autenticado. El OTP tiene un máximo de intentos permitidos (por defecto 3); " +
-                    "si se exceden, el usuario debe solicitar un nuevo OTP. Este es el paso final del flujo de autenticación de dos factores."
+            summary = "Verify OTP code and get JWT token",
+            description = "Validates the 6-digit OTP code sent to the user's email during login. " +
+                    "If the OTP is correct and has not expired (configurable, default 5 minutes), generates and returns a JWT token " +
+                    "along with the authenticated user's data. The OTP has a max number of attempts (default 3); " +
+                    "if exceeded, the user must request a new OTP. This is the final step of the two-factor authentication flow."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OTP válido. Retorna JWT y datos del usuario autenticado."),
-            @ApiResponse(responseCode = "400", description = "OTP incorrecto, expirado, o máximo de intentos alcanzado.")
+            @ApiResponse(responseCode = "200", description = "Valid OTP. Returns JWT and authenticated user data."),
+            @ApiResponse(responseCode = "400", description = "Incorrect or expired OTP, or max attempts reached.")
     })
     public ResponseEntity<OtpResponse> validateOtp(@Valid @RequestBody OtpValidationRequest request) {
         String jwt = otpUseCase.validateOtp(request.getUserId(), request.getOtpCode());
@@ -120,15 +120,15 @@ public class AuthController {
 
     @PostMapping("/otp/resend")
     @Operation(
-            summary = "Reenviar código OTP",
-            description = "Genera y envía un nuevo código OTP al correo del usuario, invalidando cualquier OTP anterior. " +
-                    "Tiene un cooldown configurable (por defecto 60 segundos) entre reenvíos para prevenir abuso. " +
-                    "El nuevo OTP tiene la misma duración de expiración que el original."
+            summary = "Resend OTP code",
+            description = "Generates and sends a new OTP code to the user's email, invalidating any previous OTP. " +
+                    "Has a configurable cooldown (default 60 seconds) between resends to prevent abuse. " +
+                    "The new OTP has the same expiration duration as the original."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Nuevo OTP enviado exitosamente."),
-            @ApiResponse(responseCode = "400", description = "Cooldown activo o userId inválido."),
-            @ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+            @ApiResponse(responseCode = "200", description = "New OTP sent successfully."),
+            @ApiResponse(responseCode = "400", description = "Active cooldown or invalid userId."),
+            @ApiResponse(responseCode = "404", description = "User not found.")
     })
     public ResponseEntity<MessageResponse> resendOtp(@Valid @RequestBody OtpResendRequest request) {
         otpUseCase.resendOtp(request.getUserId());
@@ -139,15 +139,15 @@ public class AuthController {
 
     @PostMapping("/password/recovery")
     @Operation(
-            summary = "Solicitar código de recuperación de contraseña",
-            description = "Envía un código de recuperación de un solo uso al correo institucional proporcionado. " +
-                    "El código tiene un tiempo de expiración configurable (por defecto 15 minutos). " +
-                    "Por seguridad, la respuesta siempre es 200 OK independientemente de si el correo existe en el sistema. " +
-                    "Registra evento de auditoría PASSWORD_RECOVERY_REQUEST."
+            summary = "Request password recovery code",
+            description = "Sends a single-use recovery code to the provided institutional email. " +
+                    "The code has a configurable expiration time (default 15 minutes). " +
+                    "For security, the response is always 200 OK regardless of whether the email exists in the system. " +
+                    "Logs PASSWORD_RECOVERY_REQUEST audit event."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Si el correo existe, se envió el código de recuperación. Respuesta genérica por seguridad."),
-            @ApiResponse(responseCode = "400", description = "Email vacío o con formato inválido.")
+            @ApiResponse(responseCode = "200", description = "If the email exists, a recovery code was sent. Generic response for security."),
+            @ApiResponse(responseCode = "400", description = "Empty or invalid email format.")
     })
     public ResponseEntity<MessageResponse> requestRecovery(@Valid @RequestBody PasswordRecoveryRequest request) {
         passwordRecoveryUseCase.requestRecovery(request.getEmail());
@@ -158,16 +158,16 @@ public class AuthController {
 
     @PostMapping("/password/reset")
     @Operation(
-            summary = "Restablecer contraseña con código de recuperación",
-            description = "Restablece la contraseña del usuario utilizando el código de recuperación recibido por correo. " +
-                    "El código es de un solo uso y tiene tiempo de expiración (por defecto 15 minutos). " +
-                    "La nueva contraseña se almacena con hash BCrypt. " +
-                    "Registra evento de auditoría PASSWORD_RESET."
+            summary = "Reset password with recovery code",
+            description = "Resets the user's password using the recovery code received by email. " +
+                    "The code is single-use and has an expiration time (default 15 minutes). " +
+                    "The new password is stored with BCrypt hash. " +
+                    "Logs PASSWORD_RESET audit event."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Contraseña restablecida exitosamente."),
-            @ApiResponse(responseCode = "400", description = "Código de recuperación inválido, expirado, o datos de entrada incompletos."),
-            @ApiResponse(responseCode = "410", description = "Código de recuperación expirado (Gone).")
+            @ApiResponse(responseCode = "200", description = "Password reset successfully."),
+            @ApiResponse(responseCode = "400", description = "Invalid recovery code, expired, or incomplete input data."),
+            @ApiResponse(responseCode = "410", description = "Recovery code expired (Gone).")
     })
     public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         passwordRecoveryUseCase.resetPassword(request.getEmail(), request.getRecoveryCode(), request.getNewPassword());
@@ -178,20 +178,20 @@ public class AuthController {
 
     @PostMapping("/token/validate")
     @Operation(
-            summary = "Validar token JWT",
-            description = "Valida un token JWT enviado en el header Authorization (formato: 'Bearer <token>'). " +
-                    "Verifica la firma, expiración absoluta, que no haya sido revocado (logout), y que la sesión no haya " +
-                    "expirado por inactividad (expiración de JWT por inactividad: por defecto 30 minutos sin actividad). Cada llamada válida renueva " +
-                    "la ventana de inactividad. Si es válido, retorna los datos del usuario: id, email y rol. " +
-                    "Este endpoint es consumido por otros microservicios para verificar la autenticación del usuario."
+            summary = "Validate JWT token",
+            description = "Validates a JWT token sent in the Authorization header (format: 'Bearer <token>'). " +
+                    "Verifies the signature, absolute expiration, that it hasn't been revoked (logout), and that the session hasn't " +
+                    "expired due to inactivity (JWT inactivity expiration: default 30 minutes without activity). Each valid call renews " +
+                    "the inactivity window. If valid, returns user data: id, email, and role. " +
+                    "This endpoint is consumed by other microservices to verify user authentication."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Token válido. Retorna datos del usuario autenticado."),
-            @ApiResponse(responseCode = "400", description = "Header Authorization ausente."),
-            @ApiResponse(responseCode = "401", description = "Token inválido, expirado, revocado, sesión expirada por inactividad, o header sin prefijo 'Bearer'.")
+            @ApiResponse(responseCode = "200", description = "Valid token. Returns authenticated user data."),
+            @ApiResponse(responseCode = "400", description = "Missing Authorization header."),
+            @ApiResponse(responseCode = "401", description = "Invalid, expired, or revoked token; inactivity session expired; or header without 'Bearer' prefix.")
     })
     public ResponseEntity<TokenValidationResponse> validateToken(
-            @Parameter(description = "Header de autorización con formato 'Bearer <JWT>'", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
+            @Parameter(description = "Authorization header in 'Bearer <JWT>' format", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
             @RequestHeader("Authorization") String authHeader) {
         String token = extractBearerToken(authHeader);
         User user = tokenValidationUseCase.validateToken(token);
@@ -205,17 +205,17 @@ public class AuthController {
 
     @PostMapping("/auth/logout")
     @Operation(
-            summary = "Cerrar sesión y revocar token JWT",
-            description = "Cierra la sesión del usuario revocando su token JWT. El token se agrega a una lista de revocación en MongoDB " +
-                    "con un índice TTL que lo elimina automáticamente al expirar. Cualquier intento de usar un token revocado " +
-                    "será rechazado por el filtro de seguridad JWT. Registra evento de auditoría USER_LOGOUT."
+            summary = "Logout and revoke JWT token",
+            description = "Logs out the user by revoking their JWT token. The token is added to a revocation list in MongoDB " +
+                    "with a TTL index that automatically removes it upon expiration. Any attempt to use a revoked token " +
+                    "will be rejected by the JWT security filter. Logs USER_LOGOUT audit event."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sesión cerrada y token revocado exitosamente."),
-            @ApiResponse(responseCode = "401", description = "Header Authorization sin prefijo 'Bearer', token vacío, o token inválido.")
+            @ApiResponse(responseCode = "200", description = "Session closed and token revoked successfully."),
+            @ApiResponse(responseCode = "401", description = "Authorization header without 'Bearer' prefix, empty token, or invalid token.")
     })
     public ResponseEntity<MessageResponse> logout(
-            @Parameter(description = "Header de autorización con formato 'Bearer <JWT>'", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
+            @Parameter(description = "Authorization header in 'Bearer <JWT>' format", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
             @RequestHeader("Authorization") String authHeader) {
         String token = extractBearerToken(authHeader);
         logoutUseCase.logout(token);

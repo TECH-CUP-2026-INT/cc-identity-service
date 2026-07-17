@@ -14,12 +14,12 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Respuesta de login exitoso. El login NO está completo; se requiere verificación OTP.")
+@Schema(description = "Successful login response. Login is NOT complete; OTP verification is required.")
 public class LoginResponse {
 
-    @Schema(description = "ID del usuario autenticado. Necesario para el paso de verificación OTP.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    @Schema(description = "Authenticated user ID. Required for the OTP verification step.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
     private UUID userId;
 
-    @Schema(description = "Mensaje indicando el siguiente paso del flujo de autenticación", example = "OTP sent to your email. Please validate to complete login.")
+    @Schema(description = "Message indicating the next step in the authentication flow", example = "OTP sent to your email. Please validate to complete login.")
     private String message;
 }

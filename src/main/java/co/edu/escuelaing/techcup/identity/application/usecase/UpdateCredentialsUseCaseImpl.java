@@ -26,42 +26,40 @@ public class UpdateCredentialsUseCaseImpl implements UpdateCredentialsUseCase {
     private final AuditEventRepositoryPort auditRepository;
 
     @Override
-    public void updateRole(UUID userId, UserRole newRole) {
-        log.info("Updating role for user {} to {}", userId, newRole);
-
+    public void updateRole(UUID userId, UserRole role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         UserRole previousRole = user.getRole();
-        user.setRole(newRole);
+        user.setRole(role);
         user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
         userRepository.save(user);
 
+        log.info("Role updated for userId {}: {} -> {}", userId, previousRole, role);
         auditRepository.save(AuditEvent.builder()
                 .userId(userId)
                 .actionType(AuditActionType.ROLE_UPDATED)
-                .description("Role changed from " + previousRole + " to " + newRole + " via inter-service call")
+                .description("Role updated from " + previousRole + " to " + role)
                 .success(true)
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());
     }
 
     @Override
-    public void updateStatus(UUID userId, AccountStatus newStatus) {
-        log.info("Updating status for user {} to {}", userId, newStatus);
-
+    public void updateStatus(UUID userId, AccountStatus status) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId.toString()));
 
         AccountStatus previousStatus = user.getStatus();
-        user.setStatus(newStatus);
+        user.setStatus(status);
         user.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
         userRepository.save(user);
 
+        log.info("Status updated for userId {}: {} -> {}", userId, previousStatus, status);
         auditRepository.save(AuditEvent.builder()
                 .userId(userId)
                 .actionType(AuditActionType.STATUS_UPDATED)
-                .description("Status changed from " + previousStatus + " to " + newStatus + " via inter-service call")
+                .description("Status updated from " + previousStatus + " to " + status)
                 .success(true)
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .build());

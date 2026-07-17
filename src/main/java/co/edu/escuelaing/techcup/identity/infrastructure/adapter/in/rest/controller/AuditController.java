@@ -26,9 +26,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/audit")
-@Tag(name = "Audit", description = "Endpoints de consulta del registro de auditoría de eventos de seguridad. " +
-        "Cubre el requisito funcional de Consulta de Auditoría de Seguridad. Solo accesible para usuarios con rol ADMIN. " +
-        "Permite filtrar eventos por rango de fechas, tipo de acción y usuario específico.")
+@Tag(name = "Audit", description = "Audit log query endpoints for security events. " +
+        "Covers the Security Audit Query functional requirement. Only accessible to ADMIN users. " +
+        "Allows filtering events by date range, action type, and specific user.")
 @RequiredArgsConstructor
 public class AuditController {
 
@@ -38,27 +38,27 @@ public class AuditController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
-            summary = "Consultar eventos de auditoría con filtros opcionales",
-            description = "Retorna la lista de eventos de auditoría de seguridad registrados en la plataforma. " +
-                    "Todos los filtros son opcionales; sin filtros retorna todos los eventos. " +
-                    "Los tipos de acción disponibles incluyen: USER_LOGIN, GOOGLE_LOGIN, USER_LOGOUT, USER_REGISTERED, " +
-                    "OTP_VALIDATED, PASSWORD_RECOVERY_REQUEST, PASSWORD_RESET, TOKEN_VALIDATED, entre otros. " +
-                    "Requiere autenticación JWT con rol ADMIN."
+            summary = "Query audit events with optional filters",
+            description = "Returns the list of security audit events registered in the platform. " +
+                    "All filters are optional; without filters, returns all events. " +
+                    "Available action types include: USER_LOGIN, GOOGLE_LOGIN, USER_LOGOUT, USER_REGISTERED, " +
+                    "OTP_VALIDATED, PASSWORD_RECOVERY_REQUEST, PASSWORD_RESET, TOKEN_VALIDATED, among others. " +
+                    "Requires JWT authentication with ADMIN role."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista de eventos de auditoría (puede estar vacía si no hay coincidencias)."),
-            @ApiResponse(responseCode = "400", description = "Parámetro de consulta inválido (formato de fecha incorrecto, tipo de acción inexistente, o startDate posterior a endDate)."),
-            @ApiResponse(responseCode = "401", description = "Token JWT ausente, inválido o expirado."),
-            @ApiResponse(responseCode = "403", description = "El usuario autenticado no tiene rol ADMIN.")
+            @ApiResponse(responseCode = "200", description = "List of audit events (may be empty if no matches)."),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter (incorrect date format, non-existent action type, or startDate after endDate)."),
+            @ApiResponse(responseCode = "401", description = "Missing, invalid, or expired JWT token."),
+            @ApiResponse(responseCode = "403", description = "Authenticated user does not have ADMIN role.")
     })
     public ResponseEntity<List<AuditEventResponse>> queryEvents(
-            @Parameter(description = "Fecha/hora de inicio del rango (formato ISO: yyyy-MM-ddTHH:mm:ss)", example = "2026-01-01T00:00:00")
+            @Parameter(description = "Start datetime of the range (ISO format: yyyy-MM-ddTHH:mm:ss)", example = "2026-01-01T00:00:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @Parameter(description = "Fecha/hora de fin del rango (formato ISO: yyyy-MM-ddTHH:mm:ss)", example = "2026-12-31T23:59:59")
+            @Parameter(description = "End datetime of the range (ISO format: yyyy-MM-ddTHH:mm:ss)", example = "2026-12-31T23:59:59")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @Parameter(description = "Tipo de acción de auditoría para filtrar (ej: USER_LOGIN, USER_LOGOUT, PASSWORD_RESET)")
+            @Parameter(description = "Audit action type to filter by (e.g. USER_LOGIN, USER_LOGOUT, PASSWORD_RESET)")
             @RequestParam(required = false) AuditActionType actionType,
-            @Parameter(description = "ID del usuario para filtrar eventos específicos de un usuario")
+            @Parameter(description = "User ID to filter events for a specific user")
             @RequestParam(required = false) UUID userId) {
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {

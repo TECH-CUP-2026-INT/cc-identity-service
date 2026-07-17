@@ -15,10 +15,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Solicitud de reenvío de código OTP")
+@Schema(description = "OTP code resend request")
 public class OtpResendRequest {
 
     @NotNull(message = "User ID is required")
-    @Schema(description = "ID del usuario al que se le reenviará el OTP", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    @Schema(description = "ID of the user to resend the OTP to", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
     private UUID userId;
 }

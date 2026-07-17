@@ -14,12 +14,12 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO interno para actualización de rol desde users-players-service o teams-service. " +
-        "Usado cuando un jugador se vuelve capitán (Promoción a Capitán) o se transfiere la capitanía (Transferencia de Capitanía).")
+@Schema(description = "Internal DTO to update a user's authentication role. " +
+        "Consumed during captain promotion (players-service) and captaincy transfer (teams-service).")
 public class UpdateRoleRequest {
 
     @NotNull(message = "Role is required")
-    @Schema(description = "Nuevo rol del usuario", example = "CAPTAIN",
+    @Schema(description = "New authentication role for the user", example = "CAPTAIN",
             allowableValues = {"PLAYER", "CAPTAIN", "REFEREE", "ORGANIZER", "ADMIN"})
     private UserRole role;
 }

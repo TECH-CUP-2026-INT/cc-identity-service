@@ -12,9 +12,9 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Respuesta genérica con mensaje de confirmación")
+@Schema(description = "Generic response with confirmation message")
 public class MessageResponse {
 
-    @Schema(description = "Mensaje descriptivo del resultado de la operación", example = "Operation completed successfully")
+    @Schema(description = "Descriptive message of the operation result", example = "Operation completed successfully")
     private String message;
 }

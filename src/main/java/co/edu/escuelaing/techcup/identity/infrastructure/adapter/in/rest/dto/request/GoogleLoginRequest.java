@@ -13,10 +13,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Solicitud de inicio de sesión con Google OAuth 2.0")
+@Schema(description = "Google OAuth 2.0 login request")
 public class GoogleLoginRequest {
 
     @NotBlank(message = "Google token is required")
-    @Schema(description = "Token ID obtenido del flujo de consentimiento de Google OAuth 2.0", example = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @Schema(description = "ID token obtained from the Google OAuth 2.0 consent flow", example = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String googleToken;
 }
