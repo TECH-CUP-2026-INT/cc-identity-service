@@ -7,6 +7,7 @@ import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.CreateCredentialsUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.GetUserEmailUseCase;
+import co.edu.escuelaing.techcup.identity.domain.port.in.RevokeUserSessionsUseCase;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.CreateCredentialRequest;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handler.GlobalExceptionHandler;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
@@ -55,9 +56,9 @@ class InternalCredentialControllerTest {
     @MockBean
     private CreateCredentialsUseCase createCredentialsUseCase;
     @MockBean
-    private co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase updateCredentialsUseCase;
-    @MockBean
     private GetUserEmailUseCase getUserEmailUseCase;
+    @MockBean
+    private RevokeUserSessionsUseCase revokeUserSessionsUseCase;
     @MockBean
     private UserMapper userMapper;
 
@@ -139,6 +140,15 @@ class InternalCredentialControllerTest {
         mockMvc.perform(get("/api/v1/internal/credentials/{userId}/email", missingUserId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("USER_NOT_FOUND"));
+    }
+
+    @Test
+    void revokeSessionsCallsUseCaseAndReturnsOk() throws Exception {
+        mockMvc.perform(post("/api/v1/internal/credentials/{userId}/revoke-sessions", TestFixtures.USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Sessions revoked for user " + TestFixtures.USER_ID));
+
+        verify(revokeUserSessionsUseCase).revokeAllSessions(TestFixtures.USER_ID);
     }
 
     private CreateCredentialRequest validRequest() {

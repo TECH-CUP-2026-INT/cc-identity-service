@@ -3,10 +3,8 @@ package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.contro
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.CreateCredentialsUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.GetUserEmailUseCase;
-import co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase;
+import co.edu.escuelaing.techcup.identity.domain.port.in.RevokeUserSessionsUseCase;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.CreateCredentialRequest;
-import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.UpdateRoleRequest;
-import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.UpdateStatusRequest;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.MessageResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserEmailResponse;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.response.UserResponse;
@@ -24,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +31,9 @@ import java.util.UUID;
 /**
  * Internal endpoint consumed by users-players-service for credential creation
  * during Student User Registration, Guest User Registration, and Graduate User Registration.
+ * Role and status are no longer pushed here: users-players-service is the source of
+ * truth for both, and identity queries GET /internal/players/{userId}/profile there
+ * live (at login and OTP validation) instead of keeping its own synced copy.
  */
 @RestController
 @RequestMapping("/api/v1/internal/credentials")
@@ -45,8 +45,8 @@ import java.util.UUID;
 public class InternalCredentialController {
 
     private final CreateCredentialsUseCase createCredentialsUseCase;
-    private final UpdateCredentialsUseCase updateCredentialsUseCase;
     private final GetUserEmailUseCase getUserEmailUseCase;
+    private final RevokeUserSessionsUseCase revokeUserSessionsUseCase;
     private final UserMapper userMapper;
 
     @PostMapping
@@ -75,53 +75,6 @@ public class InternalCredentialController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toResponse(saved));
     }
 
-    @PutMapping("/{userId}/role")
-    @Operation(
-            summary = "Actualizar rol de un usuario",
-            description = "Actualiza el rol de autenticación de un usuario en Identity Service. " +
-                    "Consumido por users-players-service cuando un jugador se promueve a capitán (Promoción a Capitán) " +
-                    "o por teams-service cuando se transfiere la capitanía (Transferencia de Capitanía). " +
-                    "El cambio se refleja en el próximo JWT generado al hacer login. " +
-                    "Registra evento de auditoría ROLE_UPDATED."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Rol actualizado exitosamente."),
-            @ApiResponse(responseCode = "400", description = "Rol nulo o inválido."),
-            @ApiResponse(responseCode = "404", description = "No se encontraron credenciales para el userId proporcionado.")
-    })
-    public ResponseEntity<MessageResponse> updateRole(
-            @Parameter(description = "ID del usuario (generado por users-players-service)")
-            @PathVariable UUID userId,
-            @Valid @RequestBody UpdateRoleRequest request) {
-        updateCredentialsUseCase.updateRole(userId, request.getRole());
-        return ResponseEntity.ok(MessageResponse.builder()
-                .message("Role updated to " + request.getRole())
-                .build());
-    }
-
-    @PutMapping("/{userId}/status")
-    @Operation(
-            summary = "Actualizar estado de cuenta de un usuario",
-            description = "Actualiza el estado de la cuenta de un usuario en Identity Service. " +
-                    "Consumido por users-players-service cuando el Admin deshabilita un usuario (Deshabilitación de Usuario). " +
-                    "Una cuenta INACTIVE no puede hacer login. " +
-                    "Registra evento de auditoría STATUS_UPDATED."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Estado actualizado exitosamente."),
-            @ApiResponse(responseCode = "400", description = "Estado nulo o inválido."),
-            @ApiResponse(responseCode = "404", description = "No se encontraron credenciales para el userId proporcionado.")
-    })
-    public ResponseEntity<MessageResponse> updateStatus(
-            @Parameter(description = "ID del usuario (generado por users-players-service)")
-            @PathVariable UUID userId,
-            @Valid @RequestBody UpdateStatusRequest request) {
-        updateCredentialsUseCase.updateStatus(userId, request.getStatus());
-        return ResponseEntity.ok(MessageResponse.builder()
-                .message("Status updated to " + request.getStatus())
-                .build());
-    }
-
     @GetMapping("/{userId}/email")
     @Operation(
             summary = "Consultar el correo de un usuario por su userId",
@@ -142,6 +95,26 @@ public class InternalCredentialController {
         String email = getUserEmailUseCase.getEmailByUserId(userId);
         return ResponseEntity.ok(UserEmailResponse.builder()
                 .email(email)
+                .build());
+    }
+
+    @PostMapping("/{userId}/revoke-sessions")
+    @Operation(
+            summary = "Revocar todas las sesiones activas de un usuario",
+            description = "Invalida de inmediato todos los JWT activos de un usuario. Consumido por " +
+                    "users-players-service justo después de deshabilitar una cuenta (Deshabilitación de Usuario), " +
+                    "para que el corte de acceso sea inmediato en vez de esperar a que el JWT expire por su cuenta. " +
+                    "Reutiliza la misma infraestructura de revocación que el logout."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sesiones revocadas exitosamente (o no había ninguna activa).")
+    })
+    public ResponseEntity<MessageResponse> revokeSessions(
+            @Parameter(description = "ID del usuario (generado por users-players-service)")
+            @PathVariable UUID userId) {
+        revokeUserSessionsUseCase.revokeAllSessions(userId);
+        return ResponseEntity.ok(MessageResponse.builder()
+                .message("Sessions revoked for user " + userId)
                 .build());
     }
 }

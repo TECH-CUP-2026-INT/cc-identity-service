@@ -8,9 +8,13 @@
 ================================================================================
 
 TC-06  Login con email y password
-       Dependencias externas: NINGUNA
+       Dependencias externas: Users & Players (GET /internal/players/{userId}/profile
+                              — consulta el estado ACTIVE/INACTIVE en vivo)
        Flujo: Recibe email+password, valida credenciales en su BD local,
-              genera OTP, lo envía por email (EmailPort propio).
+              consulta a Users & Players si la cuenta sigue activa (Identity ya
+              no guarda su propia copia de ese dato), genera OTP, lo envía por
+              email (EmailPort propio). Si Users & Players no responde, el
+              login falla (no se confía en datos locales desactualizados).
 
 TC-07  Login con Google OAuth
        Dependencias externas: Google OAuth (externo, GoogleOAuthPort)
@@ -18,9 +22,12 @@ TC-07  Login con Google OAuth
               registro de credenciales, genera OTP.
 
 TC-08  Validación de OTP
-       Dependencias externas: NINGUNA
-       Flujo: Recibe userId+otpCode, valida contra OTP almacenado,
-              si es correcto genera JWT con userId+email+role.
+       Dependencias externas: Users & Players (GET /internal/players/{userId}/profile
+                              — consulta el rol en vivo justo antes de generar el JWT)
+       Flujo: Recibe userId+otpCode, valida contra OTP almacenado, consulta a
+              Users & Players el rol actual del usuario, si es correcto genera
+              JWT con userId+email+role. Si Users & Players no responde, la
+              validación falla (mismo criterio que TC-06: no confiar en datos viejos).
 
 TC-09  Reenvío de OTP
        Dependencias externas: NINGUNA
@@ -52,17 +59,23 @@ POST   /api/v1/internal/credentials
        Consumido por: Users & Players Service
        Payload: { userId, email, password, fullName, userType, role }
        Propósito: Crear registro de credenciales cuando U&P crea un usuario.
-                  El userId viene de Users & Players (fuente de verdad).
+                  El userId viene de Users & Players (fuente de verdad). Este
+                  es el único push que se mantiene: la contraseña en texto
+                  plano solo existe en el momento del registro, Identity no
+                  tiene forma de "consultarla" después.
 
-PUT    /api/v1/internal/credentials/{userId}/role
-       Consumido por: Users & Players (TC-18), Teams (TC-27)
-       Payload: { role: "CAPTAIN" | "PLAYER" | ... }
-       Propósito: Actualizar el rol en las credenciales de Identity.
+GET    /api/v1/internal/credentials/{userId}/email
+       Consumido por: am-notification-service
+       Propósito: Resolver el email real de un recipientId antes de notificar
+                  (los eventos que le llegan a notifications solo traen el UUID).
+                  Protegido con API key interna (X-Internal-Api-Key). Oculto de
+                  Swagger (@Hidden) — no debe exponerse como parte de la API pública.
 
-PUT    /api/v1/internal/credentials/{userId}/status
-       Consumido por: Users & Players (TC-19)
-       Payload: { status: "ACTIVE" | "INACTIVE" | ... }
-       Propósito: Deshabilitar/habilitar cuenta en Identity.
+       [ELIMINADOS] PUT /internal/credentials/{userId}/role y /status ya NO
+       existen. Identity dejó de recibir rol/estado por push: los consulta en
+       vivo a Users & Players (GET /internal/players/{userId}/profile) en el
+       login (TC-06) y en la validación de OTP (TC-08). Ver sección de
+       dependencias más abajo.
 
 
 ================================================================================
@@ -115,17 +128,19 @@ TC-17  Consultar estadísticas de un jugador
        Estado: PENDIENTE — requiere Tournament Service.
 
 TC-18  Ascenso a capitán
-       Dependencias externas: Identity (PUT /internal/credentials/{userId}/role)
-                              Teams (validar que el jugador es capitán válido)
-       Flujo: Cambia rol del jugador a CAPTAIN en U&P, luego llama a
-              Identity para sincronizar el rol en las credenciales.
+       Dependencias externas: Teams (validar que el jugador es capitán válido)
+       Flujo: Cambia rol del jugador a CAPTAIN en U&P (fuente de verdad).
+              Ya NO llama a Identity — Identity consulta este rol en vivo
+              (GET /internal/players/{userId}/profile) la próxima vez que el
+              usuario haga login u OTP, en vez de que U&P se lo empuje.
 
 TC-19  Deshabilitar usuario
-       Dependencias externas: Identity (PUT /internal/credentials/{userId}/status)
-                              Tournament Service (validar que no tenga torneos activos)
+       Dependencias externas: Tournament Service (validar que no tenga torneos activos)
        Estado: PARCIALMENTE PENDIENTE — necesita Tournament Service para validación.
-       Flujo: Admin deshabilita usuario en U&P, llama a Identity para
-              cambiar status a INACTIVE en las credenciales.
+       Flujo: Admin deshabilita usuario en U&P (fuente de verdad). Ya NO llama
+              a Identity — Identity consulta el estado en vivo la próxima vez
+              que el usuario intente hacer login (rechazándolo ahí si ya está
+              INACTIVE), en vez de que U&P se lo empuje.
 
 --- ENDPOINTS INTERNOS DE USERS & PLAYERS (consumidos por otros servicios) ---
 
@@ -133,7 +148,10 @@ GET    /api/v1/internal/players/{playerId}/exists
        Consumido por: Teams Service (TC-25 — verificar que jugador existe)
 
 GET    /api/v1/internal/players/{playerId}/profile
-       Consumido por: Teams Service (TC-22 — obtener perfiles de miembros)
+       Consumido por: Teams Service (TC-22 — obtener perfiles de miembros),
+                      Identity Service (TC-06/TC-08 — consultar rol/estado en vivo)
+       Nota: la respuesta ahora incluye también "estado" (ACTIVE/INACTIVE),
+             antes solo traía "rol". Agregado para que Identity pueda consultarlo.
 
 GET    /api/v1/internal/players/{playerId}/captaincy
        Consumido por: Teams Service — validar si jugador ya es capitán
@@ -177,13 +195,13 @@ TC-26  Aceptar/rechazar invitación
               Si acepta, se agrega como miembro del equipo.
 
 TC-27  Transferir capitanía
-       Dependencias externas: Identity (PUT /internal/credentials/{userId}/role)
-                              Communications (NotificationPort — notificar transferencia)
-       Flujo: Capitán actual transfiere capitanía a otro miembro.
-              Se actualiza rol en Teams, luego se llama a Identity para:
-              - Nuevo capitán: role → CAPTAIN
-              - Capitán anterior: role → PLAYER
-              Se notifica a ambos jugadores.
+       Dependencias externas: Communications (NotificationPort — notificar transferencia)
+       Flujo: Capitán actual transfiere capitanía a otro miembro. Solo
+              actualiza el rol LOCAL de Teams (TeamMemberRole, dentro del
+              equipo) — nunca llamó a Identity en el código real (el
+              TC-map.txt decía lo contrario, pero no era así). Notifica a
+              ambos jugadores. El UserRole global (el que usa Identity) no
+              se sincroniza automáticamente desde esta transferencia.
 
 TC-28  Eliminar equipo
        Dependencias externas: Tournament Service (validar no inscrito en torneo activo)
@@ -196,11 +214,19 @@ TC-28  Eliminar equipo
 
 Users & Players → Identity:
   - POST /internal/credentials           (TC-01, TC-02, TC-03, TC-04, TC-05)
-  - PUT  /internal/credentials/{id}/role  (TC-18)
-  - PUT  /internal/credentials/{id}/status (TC-19)
+    Único push que queda: la contraseña en texto plano solo existe en ese
+    momento, Identity no tiene forma de consultarla después.
+
+Identity → Users & Players:
+  - GET /internal/players/{id}/profile   (TC-06, TC-08)
+    Antes era al revés (Users & Players empujaba rol/estado a Identity vía
+    PUT /internal/credentials/{id}/role y /status). Se invirtió: Identity es
+    quien consulta, Users & Players nunca "sabe" que Identity le preguntó ni
+    tiene que acordarse de avisarle nada cuando algo cambia.
 
 Teams → Identity:
-  - PUT /internal/credentials/{id}/role   (TC-27)
+  - (ninguna) — el código real nunca llamó al PUT de rol que este documento
+    describía antes; era aspiracional, no implementado.
 
 Teams → Users & Players:
   - GET /internal/players/{id}/exists     (TC-25)

@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
+import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
@@ -64,11 +65,29 @@ class TokenValidationUseCaseImplTest {
         when(sessionActivityRepository.findByToken(TestFixtures.JWT)).thenReturn(Optional.of(activity));
         when(jwtUtil.extractUserId(TestFixtures.JWT)).thenReturn(user.getId());
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(jwtUtil.extractRole(TestFixtures.JWT)).thenReturn(user.getRole().name());
 
         User result = useCase.validateToken(TestFixtures.JWT);
 
         assertThat(result).isSameAs(user);
         verify(sessionActivityRepository).save(activity);
+    }
+
+    @Test
+    void validateTokenReturnsRoleFromJwtInsteadOfStaleLocalCopy() {
+        User user = TestFixtures.activeUser();
+        user.setRole(UserRole.PLAYER);
+        SessionActivity activity = TestFixtures.sessionActivity();
+        when(jwtUtil.isTokenValid(TestFixtures.JWT)).thenReturn(true);
+        when(revokedTokenRepository.existsByToken(TestFixtures.JWT)).thenReturn(false);
+        when(sessionActivityRepository.findByToken(TestFixtures.JWT)).thenReturn(Optional.of(activity));
+        when(jwtUtil.extractUserId(TestFixtures.JWT)).thenReturn(user.getId());
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(jwtUtil.extractRole(TestFixtures.JWT)).thenReturn("CAPTAIN");
+
+        User result = useCase.validateToken(TestFixtures.JWT);
+
+        assertThat(result.getRole()).isEqualTo(UserRole.CAPTAIN);
     }
 
     @Test

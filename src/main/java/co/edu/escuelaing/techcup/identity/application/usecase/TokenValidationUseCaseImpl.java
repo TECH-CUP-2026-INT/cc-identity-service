@@ -1,6 +1,7 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
 import co.edu.escuelaing.techcup.identity.domain.enums.AuditActionType;
+import co.edu.escuelaing.techcup.identity.domain.enums.UserRole;
 import co.edu.escuelaing.techcup.identity.domain.exception.AccountInactiveException;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidTokenException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
@@ -62,6 +63,13 @@ public class TokenValidationUseCaseImpl implements TokenValidationUseCase {
                     .build());
             throw new AccountInactiveException();
         }
+
+        // El rol guardado localmente en identity ya no se mantiene sincronizado
+        // (se eliminó el push desde users-players-service); el rol vigente es el
+        // que quedó grabado en el JWT al momento de emitirlo (login/OTP), que sí
+        // se consultó en vivo. Se sobreescribe aquí para que /token/validate
+        // refleje ese rol fresco y no el valor local desactualizado.
+        user.setRole(UserRole.valueOf(jwtUtil.extractRole(token)));
 
         return user;
     }
