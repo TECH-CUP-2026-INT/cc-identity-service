@@ -1,11 +1,15 @@
 package co.edu.escuelaing.techcup.identity.application.usecase;
 
+import co.edu.escuelaing.techcup.identity.domain.enums.AccountStatus;
 import co.edu.escuelaing.techcup.identity.domain.exception.InvalidCredentialsException;
 import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException;
+import co.edu.escuelaing.techcup.identity.domain.model.User;
+import co.edu.escuelaing.techcup.identity.domain.model.UserProfileSnapshot;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.GoogleOAuthPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.UserProfilePort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.PasswordUtil;
@@ -47,6 +51,8 @@ class AuthenticationUseCaseImplEdgeCaseTest {
     @Mock
     private GoogleOAuthPort googleOAuthPort;
     @Mock
+    private UserProfilePort userProfilePort;
+    @Mock
     private PasswordUtil passwordUtil;
     @Mock
     private OtpUtil otpUtil;
@@ -61,7 +67,10 @@ class AuthenticationUseCaseImplEdgeCaseTest {
 
     @Test
     void institutionalLoginRejectsBlankPasswordWhenPasswordEncoderDoesNotMatch() {
-        when(userRepository.findByEmail(TestFixtures.EMAIL)).thenReturn(Optional.of(TestFixtures.activeUser()));
+        User user = TestFixtures.activeUser();
+        when(userRepository.findByEmail(TestFixtures.EMAIL)).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches("   ", TestFixtures.ENCODED_PASSWORD)).thenReturn(false);
 
         assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(TestFixtures.EMAIL, "   "))
@@ -101,7 +110,10 @@ class AuthenticationUseCaseImplEdgeCaseTest {
 
     @Test
     void successfulLoginCreatesOtpWithConfiguredExpirationWindow() {
-        when(userRepository.findByEmail(TestFixtures.EMAIL)).thenReturn(Optional.of(TestFixtures.activeUser()));
+        User user = TestFixtures.activeUser();
+        when(userRepository.findByEmail(TestFixtures.EMAIL)).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches(TestFixtures.PASSWORD, TestFixtures.ENCODED_PASSWORD)).thenReturn(true);
         when(otpUtil.generateOtp()).thenReturn("000123");
 

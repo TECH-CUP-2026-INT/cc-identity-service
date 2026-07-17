@@ -41,6 +41,11 @@ techcup:
     internal:
       api-key: ${INTERNAL_API_KEY:}
 
+# Users & Players Service (fuente de verdad de rol/estado; identity los consulta en vivo)
+users:
+  service:
+    base-url: ${USERS_SERVICE_URL:http://localhost:8084/api/v1}
+
 # Auth Configuration
 auth:
   max-failed-login-attempts: ${AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}

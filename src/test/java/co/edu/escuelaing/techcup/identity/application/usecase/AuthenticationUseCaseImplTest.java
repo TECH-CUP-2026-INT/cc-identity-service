@@ -9,10 +9,12 @@ import co.edu.escuelaing.techcup.identity.domain.exception.UserNotFoundException
 import co.edu.escuelaing.techcup.identity.domain.model.AuditEvent;
 import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
+import co.edu.escuelaing.techcup.identity.domain.model.UserProfileSnapshot;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.GoogleOAuthPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.UserProfilePort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.PasswordUtil;
@@ -52,6 +54,8 @@ class AuthenticationUseCaseImplTest {
     @Mock
     private GoogleOAuthPort googleOAuthPort;
     @Mock
+    private UserProfilePort userProfilePort;
+    @Mock
     private PasswordUtil passwordUtil;
     @Mock
     private OtpUtil otpUtil;
@@ -70,6 +74,8 @@ class AuthenticationUseCaseImplTest {
     void loginWithInstitutionalEmailSendsOtpAndReturnsUserId() {
         User user = TestFixtures.activeUser();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
@@ -93,6 +99,20 @@ class AuthenticationUseCaseImplTest {
     }
 
     @Test
+    void loginWithInstitutionalEmailFailsWhenUsersPlayersServiceIsUnavailable() {
+        User user = TestFixtures.activeUser();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenThrow(new co.edu.escuelaing.techcup.identity.domain.exception.UserProfileUnavailableException(user.getId().toString()));
+
+        assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD))
+                .isInstanceOf(co.edu.escuelaing.techcup.identity.domain.exception.UserProfileUnavailableException.class);
+
+        verify(otpRepository, never()).save(any());
+        verify(emailPort, never()).sendOtp(any(), any());
+    }
+
+    @Test
     void loginWithInstitutionalEmailRejectsUnknownEmailWithoutAuditing() {
         when(userRepository.findByEmail(TestFixtures.EMAIL)).thenReturn(Optional.empty());
 
@@ -106,6 +126,8 @@ class AuthenticationUseCaseImplTest {
     void loginWithInstitutionalEmailRejectsInactiveAccountAndAuditsFailure() {
         User user = TestFixtures.inactiveUser();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.INACTIVE));
 
         assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), TestFixtures.PASSWORD))
                 .isInstanceOf(AccountInactiveException.class);
@@ -122,6 +144,8 @@ class AuthenticationUseCaseImplTest {
     void loginWithInstitutionalEmailRejectsInvalidPasswordAndAuditsFailure() {
         User user = TestFixtures.activeUser();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches("wrong", user.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), "wrong"))
@@ -138,6 +162,8 @@ class AuthenticationUseCaseImplTest {
     void loginWithInstitutionalEmailLocksAccountAfterMaxFailedAttempts() {
         User user = TestFixtures.activeUser();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches("wrong", user.getPassword())).thenReturn(false);
 
         assertThatThrownBy(() -> useCase.loginWithInstitutionalEmail(user.getEmail(), "wrong"))
@@ -174,6 +200,8 @@ class AuthenticationUseCaseImplTest {
         User user = TestFixtures.lockedUser();
         user.setLockedUntil(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).minusMinutes(1));
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
@@ -190,6 +218,8 @@ class AuthenticationUseCaseImplTest {
         User user = TestFixtures.activeUser();
         user.setFailedLoginAttempts(2);
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(passwordUtil.matches(TestFixtures.PASSWORD, user.getPassword())).thenReturn(true);
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
@@ -217,6 +247,8 @@ class AuthenticationUseCaseImplTest {
         when(googleOAuthPort.validateGoogleToken("google-token"))
                 .thenReturn(Map.of("email", user.getEmail(), "name", user.getFullName()));
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.ACTIVE));
         when(otpUtil.generateOtp()).thenReturn(TestFixtures.OTP_CODE);
 
         UUID userId = useCase.loginWithGmail("google-token");
@@ -247,6 +279,8 @@ class AuthenticationUseCaseImplTest {
         when(googleOAuthPort.validateGoogleToken("google-token"))
                 .thenReturn(Map.of("email", user.getEmail()));
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(userProfilePort.fetchProfile(user.getId()))
+                .thenReturn(new UserProfileSnapshot(user.getRole(), AccountStatus.INACTIVE));
 
         assertThatThrownBy(() -> useCase.loginWithGmail("google-token"))
                 .isInstanceOf(AccountInactiveException.class);

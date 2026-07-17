@@ -9,10 +9,12 @@ import co.edu.escuelaing.techcup.identity.domain.model.OtpToken;
 import co.edu.escuelaing.techcup.identity.domain.model.SessionActivity;
 import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.OtpUseCase;
+import co.edu.escuelaing.techcup.identity.domain.model.UserProfileSnapshot;
 import co.edu.escuelaing.techcup.identity.domain.port.out.AuditEventRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.EmailPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.OtpRepositoryPort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.SessionActivityRepositoryPort;
+import co.edu.escuelaing.techcup.identity.domain.port.out.UserProfilePort;
 import co.edu.escuelaing.techcup.identity.domain.port.out.UserRepositoryPort;
 import co.edu.escuelaing.techcup.identity.shared.util.JwtUtil;
 import co.edu.escuelaing.techcup.identity.shared.util.OtpUtil;
@@ -37,6 +39,7 @@ public class OtpUseCaseImpl implements OtpUseCase {
     private final JwtUtil jwtUtil;
     private final OtpUtil otpUtil;
     private final SessionActivityRepositoryPort sessionActivityRepository;
+    private final UserProfilePort userProfilePort;
 
     @Value("${otp.max-attempts:3}")
     private int maxAttempts;
@@ -86,7 +89,8 @@ public class OtpUseCaseImpl implements OtpUseCase {
         otp.markAsUsed();
         otpRepository.save(otp);
 
-        String jwt = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
+        UserProfileSnapshot profile = userProfilePort.fetchProfile(user.getId());
+        String jwt = jwtUtil.generateToken(user.getId(), user.getEmail(), profile.getRole());
 
         sessionActivityRepository.save(SessionActivity.builder()
                 .token(jwt)

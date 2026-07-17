@@ -2,7 +2,7 @@ package co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.contro
 
 import co.edu.escuelaing.techcup.identity.domain.port.in.CreateCredentialsUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.GetUserEmailUseCase;
-import co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase;
+import co.edu.escuelaing.techcup.identity.domain.port.in.RevokeUserSessionsUseCase;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handler.GlobalExceptionHandler;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
 import org.junit.jupiter.api.Test;
@@ -44,9 +44,9 @@ class InternalCredentialControllerEdgeCaseTest {
     @MockBean
     private CreateCredentialsUseCase createCredentialsUseCase;
     @MockBean
-    private UpdateCredentialsUseCase updateCredentialsUseCase;
-    @MockBean
     private GetUserEmailUseCase getUserEmailUseCase;
+    @MockBean
+    private RevokeUserSessionsUseCase revokeUserSessionsUseCase;
     @MockBean
     private UserMapper userMapper;
 

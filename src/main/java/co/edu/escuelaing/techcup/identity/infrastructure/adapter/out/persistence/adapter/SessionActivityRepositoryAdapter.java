@@ -7,7 +7,9 @@ import co.edu.escuelaing.techcup.identity.infrastructure.mapper.SessionActivityM
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -31,5 +33,10 @@ public class SessionActivityRepositoryAdapter implements SessionActivityReposito
     @Override
     public void deleteByToken(String token) {
         mongoRepository.deleteByToken(token);
+    }
+
+    @Override
+    public List<SessionActivity> findAllByUserId(UUID userId) {
+        return mongoRepository.findAllByUserId(userId).stream().map(mapper::toDomain).toList();
     }
 }
