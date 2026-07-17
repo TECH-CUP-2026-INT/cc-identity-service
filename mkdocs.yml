@@ -1,18 +1,38 @@
-﻿site_name: TechCup — Identity Service
-site_description: Technical documentation for the identity microservice.
-site_author: TECH-CUP 2026 INT
+﻿# Project information
+site_name: CC Identity Service — TechCup
+site_description: Technical documentation of the identity and authentication microservice of the TechCup platform.
+site_author: TECH-CUP 2026 INT Team
 site_url: https://tech-cup-2026-int.github.io/cc-identity-service/
+
+# Repository
 repo_name: TECH-CUP-2026-INT/cc-identity-service
 repo_url: https://github.com/TECH-CUP-2026-INT/cc-identity-service
+edit_uri: edit/feature-Rojas/docs/
+
+# Copyright
+copyright: Copyright &copy; 2026 TECH-CUP 2026 INT
+
+# Configuration
 theme:
   name: material
   language: en
   features:
     - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
   palette:
+    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: custom
@@ -20,6 +40,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+    # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: custom
@@ -27,20 +48,72 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
   font:
     text: Roboto
     code: Roboto Mono
+
+# Custom styles
 extra_css:
   - assets/stylesheets/extra.css
+
+# Plugins
 plugins:
-  - search
+  - search:
+      lang: en
+
+# Extensions
 markdown_extensions:
+  # Python Markdown
+  - abbr
   - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
   - toc:
       permalink: true
-  - pymdownx.highlight
-  - pymdownx.superfences
+      title: On this page
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Navigation
 nav:
   - Home: index.md
-  - API: api.md
+  - Introduction: introduccion.md
+  - Requirements: requerimientos.md
   - Configuration: configuracion.md
+  - Architecture: arquitectura.md
+  - API: api.md
+  - Testing: pruebas.md
+  - Team: equipo.md
+  - Appendices: anexos.md
