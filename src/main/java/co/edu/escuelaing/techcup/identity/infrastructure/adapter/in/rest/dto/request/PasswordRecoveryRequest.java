@@ -14,11 +14,11 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Solicitud de recuperación de contraseña. Envía un código de un solo uso al correo.")
+@Schema(description = "Password recovery request. Sends a single-use code to the email.")
 public class PasswordRecoveryRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
-    @Schema(description = "Correo institucional asociado a la cuenta", example = "juan.perez@escuelaing.edu.co")
+    @Schema(description = "Institutional email associated with the account", example = "juan.perez@escuelaing.edu.co")
     private String email;
 }

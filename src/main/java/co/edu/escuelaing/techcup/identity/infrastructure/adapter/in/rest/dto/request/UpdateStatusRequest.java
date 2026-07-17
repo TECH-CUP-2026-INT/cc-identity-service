@@ -14,12 +14,12 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "DTO interno para actualización de estado de cuenta desde users-players-service. " +
+@Schema(description = "Internal DTO for account status update from users-players-service. " +
         "Usado cuando el Admin deshabilita un usuario (Deshabilitación de Usuario).")
 public class UpdateStatusRequest {
 
     @NotNull(message = "Status is required")
-    @Schema(description = "Nuevo estado de la cuenta", example = "INACTIVE",
+    @Schema(description = "New account status", example = "INACTIVE",
             allowableValues = {"ACTIVE", "INACTIVE", "BLOCKED"})
     private AccountStatus status;
 }

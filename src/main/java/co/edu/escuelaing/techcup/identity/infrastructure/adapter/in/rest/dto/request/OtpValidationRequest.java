@@ -16,14 +16,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Solicitud de verificación del código OTP para completar el flujo de autenticación de dos factores")
+@Schema(description = "OTP code verification request to complete the two-factor authentication flow")
 public class OtpValidationRequest {
 
     @NotNull(message = "User ID is required")
-    @Schema(description = "ID del usuario que recibió el OTP durante el login", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    @Schema(description = "ID of the user who received the OTP during login", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
     private UUID userId;
 
     @NotBlank(message = "OTP code is required")
-    @Schema(description = "Código OTP de 6 dígitos enviado al correo del usuario", example = "482917")
+    @Schema(description = "6-digit OTP code sent to the user email", example = "482917")
     private String otpCode;
 }

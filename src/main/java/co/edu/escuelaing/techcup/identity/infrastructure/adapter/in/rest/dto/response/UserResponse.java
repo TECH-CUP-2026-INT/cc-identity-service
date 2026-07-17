@@ -20,54 +20,54 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Datos del usuario registrado en la plataforma TechCup. Los campos opcionales dependen del tipo de usuario.")
+@Schema(description = "User data registered in the TechCup platform. Optional fields depend on user type.")
 public class UserResponse {
 
-    @Schema(description = "ID único del usuario (fuente de verdad: users-players-service)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    @Schema(description = "Unique user ID (source of truth: users-players-service)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
     private UUID id;
 
-    @Schema(description = "Nombre completo del usuario", example = "Juan Pérez García")
+    @Schema(description = "User full name", example = "Juan Pérez García")
     private String fullName;
 
-    @Schema(description = "Correo institucional del usuario", example = "juan.perez@escuelaing.edu.co")
+    @Schema(description = "User institutional email", example = "juan.perez@escuelaing.edu.co")
     private String email;
 
-    @Schema(description = "Tipo de usuario según su relación con la institución", example = "STUDENT")
+    @Schema(description = "User type based on their relationship with the institution", example = "STUDENT")
     private UserType userType;
 
-    @Schema(description = "Rol del usuario en la plataforma TechCup", example = "PLAYER")
+    @Schema(description = "User role in the TechCup platform", example = "PLAYER")
     private UserRole role;
 
-    @Schema(description = "Estado de la cuenta (ACTIVE, INACTIVE, BLOCKED)", example = "ACTIVE")
+    @Schema(description = "Account status (ACTIVE, INACTIVE, BLOCKED)", example = "ACTIVE")
     private AccountStatus status;
 
-    @Schema(description = "Tipo de documento de identidad (solo estudiantes/egresados)", example = "CC")
+    @Schema(description = "ID document type (students/alumni only)", example = "CC")
     private IdType idType;
 
-    @Schema(description = "Número de documento de identidad", example = "1234567890")
+    @Schema(description = "ID document number", example = "1234567890")
     private String idNumber;
 
-    @Schema(description = "Fecha de nacimiento del usuario", example = "2000-05-15")
+    @Schema(description = "User birth date", example = "2000-05-15")
     private LocalDate dateOfBirth;
 
-    @Schema(description = "Programa académico actual (solo estudiantes)", example = "Ingeniería de Sistemas")
+    @Schema(description = "Current academic program (students only)", example = "Ingeniería de Sistemas")
     private String academicProgram;
 
-    @Schema(description = "Semestre actual (solo estudiantes)", example = "7")
+    @Schema(description = "Current semester (students only)", example = "7")
     private Integer semester;
 
-    @Schema(description = "ID del estudiante asociado (solo invitados/guests)", example = "665f1a2b3c4d5e6f7a8b9c0d")
+    @Schema(description = "Associated student ID (guests only)", example = "665f1a2b3c4d5e6f7a8b9c0d")
     private String associatedStudentId;
 
-    @Schema(description = "Relación con el estudiante asociado (solo invitados)", example = "Hermano")
+    @Schema(description = "Relationship with associated student (guests only)", example = "Hermano")
     private String relationship;
 
-    @Schema(description = "Programa académico del que se graduó (solo egresados)", example = "Ingeniería Civil")
+    @Schema(description = "Graduated academic program (alumni only)", example = "Ingeniería Civil")
     private String formerAcademicProgram;
 
-    @Schema(description = "Fecha y hora de creación de la cuenta", example = "2026-01-15T10:30:00")
+    @Schema(description = "Account creation timestamp", example = "2026-01-15T10:30:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Fecha y hora de la última actualización", example = "2026-03-20T14:45:00")
+    @Schema(description = "Last update timestamp", example = "2026-03-20T14:45:00")
     private LocalDateTime updatedAt;
 }

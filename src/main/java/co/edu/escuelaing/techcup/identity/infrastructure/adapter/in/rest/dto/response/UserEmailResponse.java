@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Correo electrónico asociado a un userId. Usado por am-notification-service para resolver el destinatario real de una notificación.")
+@Schema(description = "Email associated with a userId. Used by am-notification-service to resolve the actual notification recipient.")
 public class UserEmailResponse {
 
-    @Schema(description = "Correo del usuario", example = "juan.perez@escuelaing.edu.co")
+    @Schema(description = "User email", example = "juan.perez@escuelaing.edu.co")
     private String email;
 }
