@@ -8,6 +8,7 @@ import co.edu.escuelaing.techcup.identity.domain.model.User;
 import co.edu.escuelaing.techcup.identity.domain.port.in.CreateCredentialsUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.GetUserEmailUseCase;
 import co.edu.escuelaing.techcup.identity.domain.port.in.RevokeUserSessionsUseCase;
+import co.edu.escuelaing.techcup.identity.domain.port.in.UpdateCredentialsUseCase;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.dto.request.CreateCredentialRequest;
 import co.edu.escuelaing.techcup.identity.infrastructure.adapter.in.rest.handler.GlobalExceptionHandler;
 import co.edu.escuelaing.techcup.identity.infrastructure.mapper.UserMapper;
@@ -59,6 +60,8 @@ class InternalCredentialControllerTest {
     private GetUserEmailUseCase getUserEmailUseCase;
     @MockBean
     private RevokeUserSessionsUseCase revokeUserSessionsUseCase;
+    @MockBean
+    private UpdateCredentialsUseCase updateCredentialsUseCase;
     @MockBean
     private UserMapper userMapper;
 
