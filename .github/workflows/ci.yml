@@ -113,7 +113,8 @@ jobs:
   deploy:
     name: Deploy to Azure App Service
     needs: dockerize-publish
-    if: github.ref == 'refs/heads/main'
+    # Set the repository variable AZURE_DEPLOY_ENABLED=true to turn deploys back on.
+    if: github.ref == 'refs/heads/main' && vars.AZURE_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     # Azure is an external dependency: if the App Service is unavailable
     # (deleted app, disabled subscription, stale publish profile) the deploy
