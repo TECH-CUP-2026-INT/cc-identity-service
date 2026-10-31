@@ -3,8 +3,21 @@ name: CI - Build, Test, Publish & Deploy
 on:
   push:
     branches: [ 'feat/**', 'develop', 'main' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'requirements.txt'
+      - 'img/**'
   pull_request:
     branches: [ 'develop', 'main' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'requirements.txt'
+      - 'img/**'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -102,6 +115,10 @@ jobs:
     needs: dockerize-publish
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Azure is an external dependency: if the App Service is unavailable
+    # (deleted app, disabled subscription, stale publish profile) the deploy
+    # fails, but build/test/image results are still reported as the pipeline status.
+    continue-on-error: true
 
     steps:
       - name: Deploy to Azure Web App
